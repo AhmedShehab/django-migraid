@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install lint deps
-        run: pip install ruff mypy "django-stubs[compatible-mypy]>=4.2" Django>=4.2 libcst>=1.1 rich>=13.0 gitpython>=3.1
+        run: pip install ruff "mypy==1.11.2" "django-stubs[compatible-mypy]==5.1.0" Django>=4.2 libcst>=1.1 rich>=13.0 gitpython>=3.1
       - run: ruff check src tests
       - run: ruff format --check src tests
       - run: mypy src/migraid
