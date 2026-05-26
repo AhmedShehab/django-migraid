@@ -18,6 +18,7 @@ theme:
 nav:
   - Home: index.md
   - Known Issues: known-issues.md
+  - Syncing the migrations table: sync-db.md
   - Commands:
       - doctor: commands/doctor.md
       - rebase: commands/rebase.md

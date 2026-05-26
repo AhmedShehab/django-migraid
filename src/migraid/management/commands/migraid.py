@@ -15,12 +15,31 @@ from ...operations.backup import DirtyWorkingTreeError, GitGuard, NotAGitRepoErr
 from ...operations.plan import (
     MigrationPlan,
     PlanExecutor,
+    UndoEntry,
     build_fix_conflicts_plan,
     build_rebase_plan,
     build_renumber_plan,
     validate_graph_improved,
 )
+from ...operations.table_sync import (
+    TableSyncCollisionError,
+    TableSyncError,
+    TableSyncPlan,
+    build_table_sync_plan,
+    describe_connection,
+    render_sql,
+    write_undo_file,
+)
+from ...operations.table_sync import execute as execute_table_sync
 from ...output.console import ConsoleOutput
+
+
+class _PostApplyError(Exception):
+    """Internal signal that post-apply validation found regressions."""
+
+    def __init__(self, errors: list[str]) -> None:
+        super().__init__("post-apply validation failed")
+        self.errors = errors
 
 
 def _get_app_dirs(app_label: str | None = None) -> list[tuple[str, Path]]:
@@ -44,6 +63,31 @@ def _get_migrations_dir(app_label: str) -> Path:
     except LookupError as exc:
         raise CommandError(f"App '{app_label}' is not in INSTALLED_APPS") from exc
     return Path(app_config.path) / "migrations"
+
+
+def _add_sync_args(parser: CommandParser) -> None:
+    """Shared --sync-db / --no-input / --database flags for the rename commands."""
+    parser.add_argument(
+        "--sync-db",
+        action="store_true",
+        help=(
+            "Rename matching django_migrations rows for applied migrations "
+            "(preserves the applied timestamp). Implies --allow-applied."
+        ),
+    )
+    parser.add_argument(
+        "--no-input",
+        "--noinput",
+        action="store_true",
+        dest="no_input",
+        help="Run non-interactively (CI): skip the confirmation prompt. Alias for --yes.",
+    )
+    parser.add_argument(
+        "--database",
+        default="default",
+        metavar="ALIAS",
+        help="Database alias whose django_migrations table to sync (default: default).",
+    )
 
 
 def _build_guard(force: bool) -> GitGuard | None:
@@ -88,6 +132,9 @@ def _execute_plan(
     output: ConsoleOutput,
     executor: PlanExecutor,
     guard: GitGuard | None,
+    *,
+    sync_db: bool = False,
+    db_alias: str = "default",
 ) -> None:
     if plan.is_empty():
         output.success(f"{plan.description}: nothing to do.")
@@ -95,6 +142,27 @@ def _execute_plan(
 
     output.print_plan_summary(plan.description, len(plan.renames))
     executor.preview(plan)
+
+    # Build the django_migrations sync plan up front so collisions abort before
+    # any file is touched, and so the preview shows exactly what the DB sync does.
+    sync_plan = None
+    if sync_db:
+        from django.db import connections
+
+        connection = connections[db_alias]
+        try:
+            sync_plan = build_table_sync_plan(plan.key_renames, analyzer.applied_migrations())
+        except TableSyncCollisionError as exc:
+            raise CommandError(str(exc)) from exc
+        if sync_plan.is_empty():
+            output.info("No applied django_migrations rows need updating.")
+        else:
+            output.print_table_sync(
+                describe_connection(connection),
+                sync_plan.mappings,
+                render_sql(sync_plan.mappings),
+                skipped=len(sync_plan.skipped),
+            )
 
     if executor.dry_run:
         return
@@ -111,24 +179,92 @@ def _execute_plan(
         except Exception as exc:
             output.warn(f"Could not create backup branch: {exc}")
 
+    if sync_plan is not None and not sync_plan.is_empty():
+        _apply_with_db_sync(
+            plan, sync_plan, analyzer, app, output, executor, db_alias, backup_branch
+        )
+    else:
+        _apply_files_only(plan, analyzer, app, output, executor, backup_branch)
+
+    output.success(plan.description)
+
+
+def _apply_files_only(
+    plan: MigrationPlan,
+    analyzer: MigrationAnalyzer,
+    app: str,
+    output: ConsoleOutput,
+    executor: PlanExecutor,
+    backup_branch: str | None,
+) -> None:
     nodes_before = dict(analyzer.nodes)
     executor.apply(plan)
 
-    # Post-apply self-validation
     analyzer.reload()
-    nodes_after = analyzer.nodes
-    errors = validate_graph_improved(nodes_before, nodes_after, app)
+    errors = validate_graph_improved(nodes_before, analyzer.nodes, app)
     if errors:
         output.error("Post-apply validation failed — reverting changes:")
         for err in errors:
             output.error(f"  {err}")
-        # Revert via undo log would already have run if apply threw; reload reflects current state
         raise CommandError(
             "Post-apply validation detected regressions. "
             f"Backup branch '{backup_branch}' remains for manual recovery."
         )
 
-    output.success(plan.description)
+
+def _apply_with_db_sync(
+    plan: MigrationPlan,
+    sync_plan: TableSyncPlan,
+    analyzer: MigrationAnalyzer,
+    app: str,
+    output: ConsoleOutput,
+    executor: PlanExecutor,
+    db_alias: str,
+    backup_branch: str | None,
+) -> None:
+    """Apply files and django_migrations row renames as one atomic, reversible unit."""
+    from pathlib import Path as _Path
+
+    from django.db import connections, transaction
+
+    connection = connections[db_alias]
+    nodes_before = dict(analyzer.nodes)
+    undo_log: list[UndoEntry] = []
+    undo_file = None
+
+    try:
+        with transaction.atomic(using=db_alias):
+            undo_log = executor.apply(plan)
+            # Write the inverse-SQL undo script before the UPDATEs commit, so a
+            # crash mid-commit still leaves a recovery path on disk.
+            undo_file = write_undo_file(sync_plan.mappings, label=app)
+            execute_table_sync(connection, sync_plan.mappings)
+
+            analyzer.reload()
+            errors = validate_graph_improved(nodes_before, analyzer.nodes, app)
+            if errors:
+                raise _PostApplyError(errors)
+    except Exception as exc:
+        executor.undo(undo_log)  # DB rolled back by atomic; replay the file undo
+        if undo_file is not None:
+            _Path(undo_file).unlink(missing_ok=True)
+        analyzer.reload()
+        if isinstance(exc, _PostApplyError):
+            output.error("Post-apply validation failed — reverted files and DB:")
+            for err in exc.errors:
+                output.error(f"  {err}")
+            raise CommandError(
+                "Post-apply validation detected regressions; all changes reverted. "
+                f"Backup branch '{backup_branch}' remains."
+            ) from exc
+        if isinstance(exc, (TableSyncError, TableSyncCollisionError)):
+            raise CommandError(
+                f"django_migrations sync failed; all changes reverted: {exc}"
+            ) from exc
+        raise
+
+    output.info(f"Wrote DB undo script: {undo_file}")
+    output.success(f"Synced {len(sync_plan.mappings)} django_migrations row(s).")
 
 
 class Command(BaseCommand):
@@ -159,6 +295,7 @@ class Command(BaseCommand):
             action="store_true",
             help="Allow renaming applied migrations (dangerous)",
         )
+        _add_sync_args(rebase)
 
         # fix-conflicts
         fc = subparsers.add_parser("fix-conflicts", help="Linearize conflicting leaf migrations")
@@ -167,6 +304,7 @@ class Command(BaseCommand):
         fc.add_argument("--yes", action="store_true")
         fc.add_argument("--force", action="store_true")
         fc.add_argument("--allow-applied", action="store_true")
+        _add_sync_args(fc)
 
         # renumber
         rn = subparsers.add_parser("renumber", help="Fix gap/duplicate numbering for an app")
@@ -175,6 +313,7 @@ class Command(BaseCommand):
         rn.add_argument("--yes", action="store_true")
         rn.add_argument("--force", action="store_true")
         rn.add_argument("--allow-applied", action="store_true")
+        _add_sync_args(rn)
 
         # prune
         prune = subparsers.add_parser(
@@ -256,11 +395,16 @@ class Command(BaseCommand):
     def _handle_renumber(self, options: dict[str, Any]) -> None:
         app: str = options["app"]
         dry_run: bool = options.get("dry_run", False)
-        yes: bool = options.get("yes", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
-        allow_applied: bool = options.get("allow_applied", False)
+        sync_db: bool = options.get("sync_db", False)
+        db_alias: str = options.get("database", "default")
+        # --sync-db keeps the DB in step, so it safely unblocks applied renames.
+        allow_applied: bool = options.get("allow_applied", False) or sync_db
 
-        from django.db import connection
+        from django.db import connections
+
+        connection = connections[db_alias]
 
         migrations_dir = _get_migrations_dir(app)
         if not migrations_dir.is_dir():
@@ -274,7 +418,9 @@ class Command(BaseCommand):
         plan = build_renumber_plan(analyzer.nodes, app, migrations_dir)
         output = ConsoleOutput(yes=yes)
         executor = PlanExecutor(dry_run=dry_run, output=output)
-        _execute_plan(plan, analyzer, app, output, executor, guard)
+        _execute_plan(
+            plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+        )
 
     # ------------------------------------------------------------------
     # fix-conflicts
@@ -283,11 +429,15 @@ class Command(BaseCommand):
     def _handle_fix_conflicts(self, options: dict[str, Any]) -> None:
         app_label: str | None = options.get("app")
         dry_run: bool = options.get("dry_run", False)
-        yes: bool = options.get("yes", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
-        allow_applied: bool = options.get("allow_applied", False)
+        sync_db: bool = options.get("sync_db", False)
+        db_alias: str = options.get("database", "default")
+        allow_applied: bool = options.get("allow_applied", False) or sync_db
 
-        from django.db import connection
+        from django.db import connections
+
+        connection = connections[db_alias]
 
         app_dirs = _get_app_dirs(app_label)
         analyzer = MigrationAnalyzer(app_dirs=app_dirs, connection=connection)
@@ -312,7 +462,9 @@ class Command(BaseCommand):
             migrations_dir = _get_migrations_dir(app)
             plan = build_fix_conflicts_plan(analyzer.nodes, app, migrations_dir)
             executor = PlanExecutor(dry_run=dry_run, output=output)
-            _execute_plan(plan, analyzer, app, output, executor, guard)
+            _execute_plan(
+                plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+            )
 
     # ------------------------------------------------------------------
     # rebase
@@ -322,11 +474,15 @@ class Command(BaseCommand):
         base_branch: str = options.get("base", "main")
         app_label: str | None = options.get("app")
         dry_run: bool = options.get("dry_run", False)
-        yes: bool = options.get("yes", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
-        allow_applied: bool = options.get("allow_applied", False)
+        sync_db: bool = options.get("sync_db", False)
+        db_alias: str = options.get("database", "default")
+        allow_applied: bool = options.get("allow_applied", False) or sync_db
 
-        from django.db import connection
+        from django.db import connections
+
+        connection = connections[db_alias]
 
         app_dirs = _get_app_dirs(app_label)
         analyzer = MigrationAnalyzer(app_dirs=app_dirs, connection=connection)
@@ -370,7 +526,9 @@ class Command(BaseCommand):
                 analyzer.nodes, app, migrations_dir, local_names, base_leaf_key
             )
             executor = PlanExecutor(dry_run=dry_run, output=output)
-            _execute_plan(plan, analyzer, app, output, executor, guard)
+            _execute_plan(
+                plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+            )
 
     # ------------------------------------------------------------------
     # prune

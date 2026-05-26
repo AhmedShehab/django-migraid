@@ -50,6 +50,18 @@ This document catalogs the migration problems django-migraid detects and (where 
 
 ---
 
+## E005 — Renamed Applied Migration (Table Desync)
+
+**Symptoms:** `migrate` reports a migration as unapplied even though its schema changes are already in the database, and an old migration name appears "missing." `doctor` shows a `django_migrations` row whose name has no file on disk while a same-suffix file exists.
+
+**Root cause:** An applied migration was renamed on disk (e.g. `rebase`/`renumber`/`fix-conflicts` with `--allow-applied`, or a manual rename) without updating the `django_migrations` table, so the recorded name no longer matches the file.
+
+**Manual fix:** `UPDATE django_migrations SET name='<new>' WHERE app='<app>' AND name='<old>';` (the exact statement is in the `doctor` hint), or revert the file rename in git.
+
+**Auto-fix:** Re-run the rename command with [`--sync-db`](sync-db.md), which renames the file and the row together. Going forward, always pass `--sync-db` instead of `--allow-applied` when renaming applied migrations.
+
+---
+
 ## W001 — Stale `django_migrations` Rows
 
 **Symptoms:** `django_migrations` table contains rows for migrations that no longer exist on disk. Subsequent migrations may fail or produce confusing output.

@@ -31,9 +31,16 @@ class FileRename:
 class MigrationPlan:
     renames: list[FileRename] = field(default_factory=list)
     description: str = ""
+    # old (app, name) -> new (app, name) for migrations whose stem changed.
+    # Drives django_migrations table sync when --sync-db is used.
+    key_renames: dict[tuple[str, str], tuple[str, str]] = field(default_factory=dict)
 
     def is_empty(self) -> bool:
         return not self.renames
+
+
+# (op, path, prior_content) entries describing how to reverse a file write.
+UndoEntry = tuple[str, Path, "str | None"]
 
 
 class PlanExecutor:
@@ -54,12 +61,18 @@ class PlanExecutor:
             )
             self._output.print_diff(old_content, rename.new_content, rename.old_path.name)
 
-    def apply(self, plan: MigrationPlan) -> None:
+    def apply(self, plan: MigrationPlan) -> list[UndoEntry]:
+        """Write file renames, returning an undo log the caller can replay.
+
+        On a failure *during* apply, files are rolled back internally before the
+        exception propagates. On success the undo log is returned so a caller can
+        reverse the file changes if a later step (e.g. the DB sync) fails.
+        """
         if self.dry_run:
             self.preview(plan)
-            return
+            return []
 
-        undo_log: list[tuple[str, Path, str | None]] = []
+        undo_log: list[UndoEntry] = []
         orig: str | None
 
         try:
@@ -90,10 +103,12 @@ class PlanExecutor:
                     undo_log.append(("deleted", rename.old_path, orig))
 
         except Exception:
-            self._undo(undo_log)
+            self.undo(undo_log)
             raise
 
-    def _undo(self, undo_log: list[tuple[str, Path, str | None]]) -> None:
+        return undo_log
+
+    def undo(self, undo_log: list[UndoEntry]) -> None:
         for op, path, content in reversed(undo_log):
             try:
                 if op == "created":
@@ -166,7 +181,11 @@ def build_renumber_plan(
                 FileRename(old_path=node.path, new_path=node.path, new_content=new_content)
             )
 
-    return MigrationPlan(renames=renames, description=f"Renumber {app} migrations")
+    return MigrationPlan(
+        renames=renames,
+        description=f"Renumber {app} migrations",
+        key_renames=dict(rename_map),
+    )
 
 
 def build_fix_conflicts_plan(
@@ -228,7 +247,11 @@ def build_fix_conflicts_plan(
                 FileRename(old_path=node.path, new_path=node.path, new_content=new_content)
             )
 
-    return MigrationPlan(renames=renames, description=f"Fix conflicts in {app}")
+    return MigrationPlan(
+        renames=renames,
+        description=f"Fix conflicts in {app}",
+        key_renames=dict(rename_map),
+    )
 
 
 def build_rebase_plan(
@@ -292,7 +315,11 @@ def build_rebase_plan(
                 FileRename(old_path=node.path, new_path=node.path, new_content=new_content)
             )
 
-    return MigrationPlan(renames=renames, description=f"Rebase {app} migrations")
+    return MigrationPlan(
+        renames=renames,
+        description=f"Rebase {app} migrations",
+        key_renames=dict(rename_map),
+    )
 
 
 def validate_graph_improved(

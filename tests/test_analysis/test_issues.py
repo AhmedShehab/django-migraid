@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from migraid.analysis.issues import (
     Severity,
@@ -14,6 +15,8 @@ from migraid.analysis.issues import (
     detect_missing_reverse_code,
     detect_nondeterministic_deps,
     detect_numbering_issues,
+    detect_renamed_applied,
+    detect_stale_db_entries,
     run_all_detectors,
 )
 from migraid.analysis.loader import MigrationAnalyzer
@@ -21,6 +24,15 @@ from migraid.analysis.loader import MigrationAnalyzer
 
 def _analyzer_from_dir(app: str, mig_dir: Path) -> MigrationAnalyzer:
     return MigrationAnalyzer(app_dirs=[(app, mig_dir)])
+
+
+def _analyzer_with_applied(
+    app: str, mig_dir: Path, applied: dict[tuple[str, str], object]
+) -> MigrationAnalyzer:
+    """Analyzer with an injected applied-migrations map (connection is truthy)."""
+    analyzer = MigrationAnalyzer(app_dirs=[(app, mig_dir)], connection=object())
+    analyzer._applied = applied
+    return analyzer
 
 
 def test_detect_conflicting_leaves(conflict_scenario: Path) -> None:
@@ -133,6 +145,53 @@ class Migration(migrations.Migration):
     analyzer = _analyzer_from_dir("ndapp", d)
     issues = detect_nondeterministic_deps(analyzer)
     assert any(i.code == "W005" for i in issues)
+
+
+def test_detect_renamed_applied_flags_desync(tmp_path: Path) -> None:
+    """An applied row whose file was renamed on disk is E005, not W001."""
+    from tests.conftest import write_migration
+
+    d = tmp_path / "app" / "migrations"
+    d.mkdir(parents=True)
+    (d / "__init__.py").write_text("")
+    write_migration(d, "0001_initial", [])
+    write_migration(d, "0002_step", [("app", "0001_initial")])  # the renamed file
+
+    applied: dict[tuple[str, str], object] = {
+        ("app", "0001_initial"): SimpleNamespace(applied="2026-01-01"),
+        ("app", "0001_step"): SimpleNamespace(applied="2026-01-02"),  # old name, no file
+    }
+    analyzer = _analyzer_with_applied("app", d, applied)
+
+    e005 = detect_renamed_applied(analyzer)
+    assert len(e005) == 1
+    assert e005[0].code == "E005"
+    assert e005[0].migration == "0001_step"
+    assert "0002_step" in e005[0].message
+
+    # W001 must NOT also fire for the same row (pruning it would lose applied state).
+    w001 = detect_stale_db_entries(analyzer)
+    assert all(i.migration != "0001_step" for i in w001)
+
+
+def test_detect_renamed_applied_ambiguous_falls_back_to_w001(tmp_path: Path) -> None:
+    """Two disk candidates with the same suffix is ambiguous → no E005, W001 stands."""
+    from tests.conftest import write_migration
+
+    d = tmp_path / "app" / "migrations"
+    d.mkdir(parents=True)
+    (d / "__init__.py").write_text("")
+    write_migration(d, "0002_step", [])
+    write_migration(d, "0003_step", [])  # second 'step' → ambiguous match
+
+    applied: dict[tuple[str, str], object] = {
+        ("app", "0001_step"): SimpleNamespace(applied="2026-01-02")
+    }
+    analyzer = _analyzer_with_applied("app", d, applied)
+
+    assert detect_renamed_applied(analyzer) == []
+    w001 = detect_stale_db_entries(analyzer)
+    assert any(i.code == "W001" and i.migration == "0001_step" for i in w001)
 
 
 def test_run_all_detectors_no_db(simple_linear: Path) -> None:

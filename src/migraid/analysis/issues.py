@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -11,6 +12,7 @@ from .graph import dangling_dependencies, detect_cycles, leaf_nodes, topological
 
 if TYPE_CHECKING:
     from .loader import MigrationAnalyzer
+    from .scanner import MigrationNode
 
 
 class Severity(str, Enum):
@@ -128,6 +130,67 @@ def detect_dangling_dependencies(analyzer: MigrationAnalyzer) -> list[Issue]:
     return issues
 
 
+def _name_suffix(name: str) -> str:
+    m = re.match(r"^\d+_(.*)", name)
+    return m.group(1) if m else name
+
+
+def _renamed_row_suspects(analyzer: MigrationAnalyzer) -> dict[tuple[str, str], MigrationNode]:
+    """Map applied rows with no file to the disk migration that looks like the rename.
+
+    Shared by E005 (which reports the desync) and W001 (which must *not* suggest
+    pruning such a row — that would delete an applied migration's bookkeeping).
+    A suspect is only recorded when exactly one unrecorded disk migration in the
+    same app shares the orphan row's name suffix, to avoid false positives.
+    """
+    try:
+        applied = analyzer.applied_migrations()
+    except Exception:
+        return {}
+    disk_keys = set(analyzer.nodes.keys())
+
+    by_suffix: dict[tuple[str, str], list[MigrationNode]] = {}
+    for key, node in analyzer.nodes.items():
+        if key in applied:
+            continue
+        by_suffix.setdefault((key[0], node.name_suffix), []).append(node)
+
+    suspects: dict[tuple[str, str], MigrationNode] = {}
+    for key in applied:
+        if key in disk_keys:
+            continue
+        candidates = by_suffix.get((key[0], _name_suffix(key[1])))
+        if candidates and len(candidates) == 1:
+            suspects[key] = candidates[0]
+    return suspects
+
+
+def detect_renamed_applied(analyzer: MigrationAnalyzer) -> list[Issue]:
+    """E005: applied row whose file was renamed on disk without syncing the table."""
+    issues: list[Issue] = []
+    for old_key, node in sorted(_renamed_row_suspects(analyzer).items()):
+        issues.append(
+            Issue(
+                code="E005",
+                severity=Severity.ERROR,
+                app=old_key[0],
+                migration=old_key[1],
+                message=(
+                    f"django_migrations row '{old_key[0]}.{old_key[1]}' has no file; "
+                    f"disk has '{node.name}' (same migration, renamed) — DB is desynced"
+                ),
+                hint=(
+                    "Likely a file-only rename (--allow-applied without --sync-db). "
+                    "Revert the rename in git and re-run with --sync-db, or run: "
+                    f"UPDATE django_migrations SET name='{node.name}' "
+                    f"WHERE app='{old_key[0]}' AND name='{old_key[1]}';"
+                ),
+                fixable=False,
+            )
+        )
+    return issues
+
+
 def detect_stale_db_entries(analyzer: MigrationAnalyzer) -> list[Issue]:
     """W001: django_migrations rows with no corresponding file on disk (DB-dependent)."""
     issues: list[Issue] = []
@@ -136,8 +199,9 @@ def detect_stale_db_entries(analyzer: MigrationAnalyzer) -> list[Issue]:
     except Exception:
         return issues
     disk_keys = set(analyzer.nodes.keys())
+    suspects = _renamed_row_suspects(analyzer)
     for key in sorted(applied.keys()):
-        if key not in disk_keys:
+        if key not in disk_keys and key not in suspects:
             issues.append(
                 Issue(
                     code="W001",
@@ -316,6 +380,7 @@ ALL_DETECTORS: list[Detector] = [
     detect_circular_deps,
     detect_numbering_issues,
     detect_dangling_dependencies,
+    detect_renamed_applied,
     detect_stale_db_entries,
     detect_missing_reverse_code,
     detect_incomplete_squash,
@@ -325,7 +390,11 @@ ALL_DETECTORS: list[Detector] = [
     detect_fake_footguns,
 ]
 
-_DB_DEPENDENT: set[Detector] = {detect_stale_db_entries, detect_fake_footguns}
+_DB_DEPENDENT: set[Detector] = {
+    detect_renamed_applied,
+    detect_stale_db_entries,
+    detect_fake_footguns,
+}
 
 
 def run_all_detectors(

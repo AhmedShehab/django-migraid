@@ -14,3 +14,5 @@ The `doctor` command scans your project's migrations for common issues, circular
 
 - **Tier 1 (Static)**: Scans files using `libcst` without importing them. Works even if the code is broken.
 - **Tier 2 (Live)**: Optional integration with Django's migration loader for database-dependent checks.
+
+Tier 2 includes **E005**, which flags an applied `django_migrations` row whose file was renamed on disk without updating the table. The hint explains how to recover; see [Syncing the `django_migrations` table](../sync-db.md).

@@ -12,6 +12,7 @@ from rich.table import Table
 
 if TYPE_CHECKING:
     from ..analysis.issues import Issue
+    from ..operations.table_sync import RowMapping
 
 
 class ConsoleOutput:
@@ -68,6 +69,39 @@ class ConsoleOutput:
 
     def print_plan_summary(self, description: str, n_changes: int) -> None:
         self._console.print(f"[bold]{description}[/bold]: {n_changes} file(s) to change")
+
+    def print_table_sync(
+        self,
+        target: str,
+        mappings: list[RowMapping],
+        sql: list[str],
+        skipped: int = 0,
+    ) -> None:
+        """Show exactly what the django_migrations sync will do before the prompt."""
+        self._console.print()
+        self._console.print(f"[bold]Target DB:[/bold] {target}")
+        self._console.print(
+            f"[bold]django_migrations changes[/bold] ({len(mappings)} row(s)):"
+        )
+
+        table = Table(box=box.ROUNDED, show_header=True, header_style="bold")
+        table.add_column("App", no_wrap=True)
+        table.add_column("Old name")
+        table.add_column("New name")
+        table.add_column("Applied (kept)", no_wrap=True)
+        for m in mappings:
+            applied = "—" if m.applied is None else str(m.applied)
+            table.add_row(m.app, m.old_name, f"[cyan]{m.new_name}[/cyan]", applied)
+        self._console.print(table)
+
+        if skipped:
+            self._console.print(
+                f"[dim]{skipped} renamed migration(s) had no recorded row — skipped.[/dim]"
+            )
+
+        self._console.print("[bold]SQL to run:[/bold]")
+        sql_text = "\n".join(sql)
+        self._console.print(Syntax(sql_text, "sql", theme="monokai", line_numbers=False))
 
     def confirm(self, prompt: str) -> bool:
         if self._yes:
