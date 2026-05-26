@@ -1,0 +1,36 @@
+site_name: django-migraid
+site_description: Detect, diagnose, and auto-fix Django migration problems in Git workflows
+site_url: https://yourusername.github.io/django-migraid
+repo_url: https://github.com/yourusername/django-migraid
+repo_name: yourusername/django-migraid
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+  features:
+    - navigation.tabs
+    - navigation.instant
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Known Issues: known-issues.md
+  - Commands:
+      - doctor: commands/doctor.md
+      - rebase: commands/rebase.md
+      - fix-conflicts: commands/fix-conflicts.md
+      - renumber: commands/renumber.md
+      - prune: commands/prune.md
+      - graph: commands/graph.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
