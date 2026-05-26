@@ -38,9 +38,13 @@ def test_graph_dot_format() -> None:
 def test_graph_output_to_file(tmp_path) -> None:
     out_file = tmp_path / "graph.txt"
     call_command(
-        "migraid", "graph", "testapp",
-        "--format", "ascii",
-        "--output", str(out_file),
+        "migraid",
+        "graph",
+        "testapp",
+        "--format",
+        "ascii",
+        "--output",
+        str(out_file),
     )
     assert out_file.exists()
     content = out_file.read_text()

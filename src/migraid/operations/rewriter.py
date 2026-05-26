@@ -6,8 +6,12 @@ Preserves all formatting, comments, and whitespace — no noisy diffs.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 import libcst as cst
+
+if TYPE_CHECKING:
+    from libcst.metadata import MetadataWrapper  # noqa: F401
 
 
 def _extract_string(node: cst.BaseExpression) -> str | None:
@@ -49,7 +53,7 @@ class DependencyTransformer(cst.CSTTransformer):
 
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.BaseStatement | cst.BaseSmallStatement:
+    ) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
         if self._class_stack and self._class_stack[-1] == original_node.name.value:
             self._class_stack.pop()
         return updated_node
@@ -74,9 +78,7 @@ class DependencyTransformer(cst.CSTTransformer):
         self._in_dep_list = False
         return updated_node
 
-    def leave_Tuple(
-        self, original_node: cst.Tuple, updated_node: cst.Tuple
-    ) -> cst.BaseExpression:
+    def leave_Tuple(self, original_node: cst.Tuple, updated_node: cst.Tuple) -> cst.BaseExpression:
         if not self._in_dep_list or not self.replacements:
             return updated_node
 
@@ -94,7 +96,7 @@ class DependencyTransformer(cst.CSTTransformer):
             return updated_node
 
         new_dep = self.replacements[dep]
-        quote_char = _detect_quote_char(elements[0])
+        quote_char = _detect_quote_char(cast(cst.Element, elements[0]))
 
         new_elements = list(updated_node.elements)
         idx0 = next(

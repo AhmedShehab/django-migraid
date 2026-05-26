@@ -295,9 +295,7 @@ class Command(BaseCommand):
         from ...analysis.graph import leaf_nodes
 
         apps_with_conflicts = [
-            a
-            for a in {k[0] for k in analyzer.nodes}
-            if len(leaf_nodes(analyzer.nodes, a)) > 1
+            a for a in {k[0] for k in analyzer.nodes} if len(leaf_nodes(analyzer.nodes, a)) > 1
         ]
         if app_label:
             apps_with_conflicts = [a for a in apps_with_conflicts if a == app_label]

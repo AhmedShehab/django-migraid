@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from .scanner import MigrationNode, scan_dirs
 
 if TYPE_CHECKING:
-    pass
+    from django.db.backends.base.base import BaseDatabaseWrapper  # noqa: F401
 
 
 class MigrationAnalyzer:
@@ -50,9 +50,10 @@ class MigrationAnalyzer:
         if self._applied is not None:
             return self._applied
         try:
+            from django.db.backends.base.base import BaseDatabaseWrapper
             from django.db.migrations.recorder import MigrationRecorder
 
-            recorder = MigrationRecorder(self._connection)
+            recorder = MigrationRecorder(cast(BaseDatabaseWrapper, self._connection))
             self._applied = dict(recorder.applied_migrations())
         except Exception as exc:
             self.live_load_error = exc

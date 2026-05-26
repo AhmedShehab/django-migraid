@@ -51,8 +51,7 @@ class ConsoleOutput:
             for issue in fixable:
                 cmd = issue.fix_command or ""
                 self._console.print(
-                    f"  [dim]{issue.code}[/dim] → "
-                    f"[cyan]python manage.py migraid {cmd}[/cyan]"
+                    f"  [dim]{issue.code}[/dim] → [cyan]python manage.py migraid {cmd}[/cyan]"
                 )
 
     def print_diff(self, old: str, new: str, filename: str) -> None:
@@ -68,9 +67,7 @@ class ConsoleOutput:
             self._console.print(syntax)
 
     def print_plan_summary(self, description: str, n_changes: int) -> None:
-        self._console.print(
-            f"[bold]{description}[/bold]: {n_changes} file(s) to change"
-        )
+        self._console.print(f"[bold]{description}[/bold]: {n_changes} file(s) to change")
 
     def confirm(self, prompt: str) -> bool:
         if self._yes:

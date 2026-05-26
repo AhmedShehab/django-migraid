@@ -91,10 +91,7 @@ def _has_reverse_arg(call: cst.Call, kwarg_name: str) -> bool:
     positional = [arg for arg in call.args if arg.keyword is None]
     if len(positional) >= 2:
         return True
-    return any(
-        arg.keyword is not None and arg.keyword.value == kwarg_name
-        for arg in call.args
-    )
+    return any(arg.keyword is not None and arg.keyword.value == kwarg_name for arg in call.args)
 
 
 def _extract_operations(node: cst.BaseExpression) -> list[OperationInfo]:

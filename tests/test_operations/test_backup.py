@@ -138,16 +138,24 @@ def test_local_migrations_since_no_additions(git_repo: Path) -> None:
 
 def test_local_migrations_since_detects_added_files(git_repo: Path) -> None:
     # Add a migration on main
-    _commit(git_repo, "add base migration", {
-        "myapp/migrations/__init__.py": "",
-        "myapp/migrations/0001_initial.py": "# base migration",
-    })
+    _commit(
+        git_repo,
+        "add base migration",
+        {
+            "myapp/migrations/__init__.py": "",
+            "myapp/migrations/0001_initial.py": "# base migration",
+        },
+    )
 
     # Branch off main and add a local migration
     _git(git_repo, "checkout", "-b", "feature")
-    _commit(git_repo, "add local migration", {
-        "myapp/migrations/0002_local_feature.py": "# local migration",
-    })
+    _commit(
+        git_repo,
+        "add local migration",
+        {
+            "myapp/migrations/0002_local_feature.py": "# local migration",
+        },
+    )
 
     guard = GitGuard(path=git_repo)
     local = guard.local_migrations_since("main")
@@ -157,16 +165,24 @@ def test_local_migrations_since_detects_added_files(git_repo: Path) -> None:
 
 
 def test_local_migrations_since_multiple_files(git_repo: Path) -> None:
-    _commit(git_repo, "base", {
-        "myapp/migrations/__init__.py": "",
-        "myapp/migrations/0001_initial.py": "# base",
-    })
+    _commit(
+        git_repo,
+        "base",
+        {
+            "myapp/migrations/__init__.py": "",
+            "myapp/migrations/0001_initial.py": "# base",
+        },
+    )
 
     _git(git_repo, "checkout", "-b", "feature")
-    _commit(git_repo, "two local migrations", {
-        "myapp/migrations/0002_step_a.py": "# step a",
-        "myapp/migrations/0003_step_b.py": "# step b",
-    })
+    _commit(
+        git_repo,
+        "two local migrations",
+        {
+            "myapp/migrations/0002_step_a.py": "# step a",
+            "myapp/migrations/0003_step_b.py": "# step b",
+        },
+    )
 
     guard = GitGuard(path=git_repo)
     local = guard.local_migrations_since("main")
@@ -177,18 +193,26 @@ def test_local_migrations_since_multiple_files(git_repo: Path) -> None:
 
 
 def test_local_migrations_since_app_filter(git_repo: Path) -> None:
-    _commit(git_repo, "base", {
-        "myapp/migrations/__init__.py": "",
-        "myapp/migrations/0001_initial.py": "# myapp base",
-        "otherapp/migrations/__init__.py": "",
-        "otherapp/migrations/0001_initial.py": "# otherapp base",
-    })
+    _commit(
+        git_repo,
+        "base",
+        {
+            "myapp/migrations/__init__.py": "",
+            "myapp/migrations/0001_initial.py": "# myapp base",
+            "otherapp/migrations/__init__.py": "",
+            "otherapp/migrations/0001_initial.py": "# otherapp base",
+        },
+    )
 
     _git(git_repo, "checkout", "-b", "feature")
-    _commit(git_repo, "local migrations", {
-        "myapp/migrations/0002_myapp_local.py": "# myapp local",
-        "otherapp/migrations/0002_otherapp_local.py": "# otherapp local",
-    })
+    _commit(
+        git_repo,
+        "local migrations",
+        {
+            "myapp/migrations/0002_myapp_local.py": "# myapp local",
+            "otherapp/migrations/0002_otherapp_local.py": "# otherapp local",
+        },
+    )
 
     guard = GitGuard(path=git_repo)
     local_myapp = guard.local_migrations_since("main", app_label="myapp")
@@ -206,11 +230,15 @@ def test_base_leaf_for_app_returns_none_for_missing_ref(git_repo: Path) -> None:
 
 def test_base_leaf_for_app_returns_stem_when_present(git_repo: Path) -> None:
     # Commit a migration on main
-    _commit(git_repo, "add base", {
-        "myapp/migrations/__init__.py": "",
-        "myapp/migrations/0001_initial.py": "# base",
-        "myapp/migrations/0002_step.py": "# step",
-    })
+    _commit(
+        git_repo,
+        "add base",
+        {
+            "myapp/migrations/__init__.py": "",
+            "myapp/migrations/0001_initial.py": "# base",
+            "myapp/migrations/0002_step.py": "# step",
+        },
+    )
 
     guard = GitGuard(path=git_repo)
     # base_leaf_for_app may return None if implementation doesn't find it via git show
@@ -224,10 +252,14 @@ def test_local_migrations_since_excludes_init_files(git_repo: Path) -> None:
     _commit(git_repo, "base", {"README.txt": "base"})
 
     _git(git_repo, "checkout", "-b", "feature")
-    _commit(git_repo, "add migrations dir", {
-        "myapp/migrations/__init__.py": "",
-        "myapp/migrations/0001_initial.py": "# migration",
-    })
+    _commit(
+        git_repo,
+        "add migrations dir",
+        {
+            "myapp/migrations/__init__.py": "",
+            "myapp/migrations/0001_initial.py": "# migration",
+        },
+    )
 
     guard = GitGuard(path=git_repo)
     local = guard.local_migrations_since("main")

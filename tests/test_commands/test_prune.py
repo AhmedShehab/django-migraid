@@ -31,7 +31,6 @@ def test_prune_detects_stale_row() -> None:
     from django.db import connection
     from django.db.migrations.recorder import MigrationRecorder
 
-
     recorder = MigrationRecorder(connection)
     recorder.ensure_schema()
 

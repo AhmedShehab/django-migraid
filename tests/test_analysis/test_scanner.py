@@ -11,7 +11,7 @@ from migraid.analysis.scanner import (
     scan_dirs,
 )
 
-SIMPLE_MIGRATION = '''\
+SIMPLE_MIGRATION = """\
 from django.db import migrations, models
 
 
@@ -21,9 +21,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.CreateModel(name="Foo", fields=[]),
     ]
-'''
+"""
 
-MIGRATION_WITH_DEPS = '''\
+MIGRATION_WITH_DEPS = """\
 from django.db import migrations
 
 
@@ -33,9 +33,9 @@ class Migration(migrations.Migration):
         ("otherapp", "0003_step"),
     ]
     operations = []
-'''
+"""
 
-RUNPYTHON_NO_REVERSE = '''\
+RUNPYTHON_NO_REVERSE = """\
 from django.db import migrations
 
 
@@ -48,9 +48,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(forward),
     ]
-'''
+"""
 
-RUNPYTHON_WITH_NOOP = '''\
+RUNPYTHON_WITH_NOOP = """\
 from django.db import migrations
 
 
@@ -63,9 +63,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(forward, migrations.RunPython.noop),
     ]
-'''
+"""
 
-RUNSQL_NO_REVERSE = '''\
+RUNSQL_NO_REVERSE = """\
 from django.db import migrations
 
 
@@ -74,9 +74,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL("SELECT 1"),
     ]
-'''
+"""
 
-SQUASH_MIGRATION = '''\
+SQUASH_MIGRATION = """\
 from django.db import migrations
 
 
@@ -84,9 +84,9 @@ class Migration(migrations.Migration):
     replaces = [("myapp", "0001_initial"), ("myapp", "0002_add_field")]
     dependencies = []
     operations = []
-'''
+"""
 
-SINGLE_QUOTED = '''\
+SINGLE_QUOTED = """\
 from django.db import migrations
 
 
@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
         ('myapp', '0001_initial'),
     ]
     operations = []
-'''
+"""
 
 
 def _write(tmp_path: Path, name: str, content: str) -> Path:

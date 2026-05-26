@@ -7,9 +7,7 @@ from collections import deque
 from .scanner import MigrationNode
 
 
-def leaf_nodes(
-    nodes: dict[tuple[str, str], MigrationNode], app: str
-) -> list[MigrationNode]:
+def leaf_nodes(nodes: dict[tuple[str, str], MigrationNode], app: str) -> list[MigrationNode]:
     """Nodes with no in-app dependents (current migration heads)."""
     app_keys = {k for k in nodes if k[0] == app}
     has_dependent: set[tuple[str, str]] = set()
@@ -21,9 +19,7 @@ def leaf_nodes(
     return sorted([nodes[k] for k in app_keys if k not in has_dependent], key=lambda n: n.key)
 
 
-def root_nodes(
-    nodes: dict[tuple[str, str], MigrationNode], app: str
-) -> list[MigrationNode]:
+def root_nodes(nodes: dict[tuple[str, str], MigrationNode], app: str) -> list[MigrationNode]:
     """Nodes with no in-app dependencies (migration starting points)."""
     app_keys = {k for k in nodes if k[0] == app}
     roots = []
@@ -35,9 +31,7 @@ def root_nodes(
     return sorted(roots, key=lambda n: n.key)
 
 
-def topological_sort(
-    nodes: dict[tuple[str, str], MigrationNode], app: str
-) -> list[MigrationNode]:
+def topological_sort(nodes: dict[tuple[str, str], MigrationNode], app: str) -> list[MigrationNode]:
     """Return migrations for an app in dependency order (Kahn's algorithm)."""
     app_keys = [k for k in nodes if k[0] == app]
 

@@ -31,6 +31,7 @@ def _nodes(*nodes: MigrationNode) -> dict[tuple[str, str], MigrationNode]:
 
 # ---- leaf / root ----
 
+
 def test_leaf_nodes_simple_chain() -> None:
     nodes = _nodes(
         _node("a", "0001_initial"),
@@ -75,6 +76,7 @@ def test_leaf_nodes_only_own_app() -> None:
 
 # ---- topological_sort ----
 
+
 def test_topo_sort_linear() -> None:
     nodes = _nodes(
         _node("a", "0001_initial"),
@@ -105,6 +107,7 @@ def test_topo_sort_empty() -> None:
 
 
 # ---- detect_cycles ----
+
 
 def test_detect_cycles_no_cycle() -> None:
     nodes = _nodes(
@@ -142,6 +145,7 @@ def test_detect_cycles_cross_app() -> None:
 
 # ---- dangling_dependencies ----
 
+
 def test_dangling_dependencies_clean() -> None:
     nodes = _nodes(
         _node("a", "0001_initial"),
@@ -162,6 +166,7 @@ def test_dangling_dependencies_missing_dep() -> None:
 
 
 # ---- find_highest_number ----
+
 
 def test_find_highest_number() -> None:
     nodes = _nodes(
@@ -185,6 +190,7 @@ def test_find_highest_number_empty() -> None:
 
 
 # ---- cross_app_dependencies ----
+
 
 def test_cross_app_dependencies() -> None:
     nodes = _nodes(

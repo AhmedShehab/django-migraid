@@ -32,7 +32,14 @@ def test_doctor_json_issue_shape() -> None:
     call_command("migraid", "doctor", "--app", "testapp", "--format", "json", stdout=out)
     data = json.loads(out.getvalue())
     required_keys = {
-        "code", "severity", "app", "migration", "message", "hint", "fixable", "fix_command"
+        "code",
+        "severity",
+        "app",
+        "migration",
+        "message",
+        "hint",
+        "fixable",
+        "fix_command",
     }
     for issue in data:
         assert required_keys == set(issue.keys())

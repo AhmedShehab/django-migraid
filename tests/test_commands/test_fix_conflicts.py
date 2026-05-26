@@ -10,8 +10,10 @@ from django.core.management import call_command
 def test_fix_conflicts_no_conflicts() -> None:
     """fix-conflicts on a clean app reports no conflicts and exits normally."""
     call_command(
-        "migraid", "fix-conflicts",
-        "--app", "testapp",
+        "migraid",
+        "fix-conflicts",
+        "--app",
+        "testapp",
         "--dry-run",
         "--allow-applied",
     )

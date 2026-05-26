@@ -6,16 +6,16 @@ from pathlib import Path
 
 import pytest
 
-MIGRATION_TEMPLATE = '''\
+MIGRATION_TEMPLATE = """\
 from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
     dependencies = {dependencies!r}
     operations = {operations}
-'''
+"""
 
-RUNPYTHON_TEMPLATE = '''\
+RUNPYTHON_TEMPLATE = """\
 from django.db import migrations
 
 
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(forward{reverse}),
     ]
-'''
+"""
 
 
 def write_migration(

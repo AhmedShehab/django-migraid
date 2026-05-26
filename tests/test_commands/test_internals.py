@@ -48,9 +48,7 @@ def test_build_guard_dirty_tree_raises_command_error() -> None:
     with patch("migraid.management.commands.migraid.GitGuard") as mock_guard_cls:
         mock_instance = create_autospec(GitGuard, instance=True)
         mock_guard_cls.return_value = mock_instance
-        mock_instance.assert_clean_working_tree.side_effect = DirtyWorkingTreeError(
-            "dirty tree"
-        )
+        mock_instance.assert_clean_working_tree.side_effect = DirtyWorkingTreeError("dirty tree")
         with pytest.raises(CommandError, match="dirty tree"):
             _build_guard(force=False)
 
@@ -130,17 +128,22 @@ def test_fix_conflicts_apply_path_executes_plan(tmp_path: Path) -> None:
 
     app_dirs = [("planapp", d)]
 
-    with patch(
-        "migraid.management.commands.migraid._get_app_dirs",
-        return_value=app_dirs,
-    ), patch(
-        "migraid.management.commands.migraid._get_migrations_dir",
-        return_value=d,
+    with (
+        patch(
+            "migraid.management.commands.migraid._get_app_dirs",
+            return_value=app_dirs,
+        ),
+        patch(
+            "migraid.management.commands.migraid._get_migrations_dir",
+            return_value=d,
+        ),
     ):
         # --yes skips confirmation; --force skips git check; --allow-applied skips DB check
         call_command(
-            "migraid", "fix-conflicts",
-            "--app", "planapp",
+            "migraid",
+            "fix-conflicts",
+            "--app",
+            "planapp",
             "--yes",
             "--force",
             "--allow-applied",
@@ -164,15 +167,20 @@ def test_renumber_apply_path_executes_plan(tmp_path: Path) -> None:
 
     app_dirs = [("renumapp", d)]
 
-    with patch(
-        "migraid.management.commands.migraid._get_app_dirs",
-        return_value=app_dirs,
-    ), patch(
-        "migraid.management.commands.migraid._get_migrations_dir",
-        return_value=d,
+    with (
+        patch(
+            "migraid.management.commands.migraid._get_app_dirs",
+            return_value=app_dirs,
+        ),
+        patch(
+            "migraid.management.commands.migraid._get_migrations_dir",
+            return_value=d,
+        ),
     ):
         call_command(
-            "migraid", "renumber", "renumapp",
+            "migraid",
+            "renumber",
+            "renumapp",
             "--yes",
             "--force",
             "--allow-applied",

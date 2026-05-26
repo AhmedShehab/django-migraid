@@ -166,8 +166,6 @@ def test_run_all_detectors_app_filter(tmp_path: Path) -> None:
     write_migration(d_a, "0003_gap", [("appa", "0001_initial")])
     write_migration(d_b, "0001_initial", [])
 
-    analyzer = MigrationAnalyzer(
-        app_dirs=[("appa", d_a), ("appb", d_b)]
-    )
+    analyzer = MigrationAnalyzer(app_dirs=[("appa", d_a), ("appb", d_b)])
     issues = run_all_detectors(analyzer, app="appa")
     assert all(i.app == "appa" for i in issues)

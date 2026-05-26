@@ -60,6 +60,7 @@ class PlanExecutor:
             return
 
         undo_log: list[tuple[str, Path, str | None]] = []
+        orig: str | None
 
         try:
             # Phase 1: write new files
@@ -106,6 +107,7 @@ class PlanExecutor:
 # ---------------------------------------------------------------------------
 # Algorithm helpers
 # ---------------------------------------------------------------------------
+
 
 def _build_rename_map_for_renumber(
     nodes: dict[tuple[str, str], MigrationNode],
