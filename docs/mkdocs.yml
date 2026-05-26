@@ -1,8 +1,8 @@
 site_name: django-migraid
 site_description: Detect, diagnose, and auto-fix Django migration problems in Git workflows
-site_url: https://yourusername.github.io/django-migraid
-repo_url: https://github.com/yourusername/django-migraid
-repo_name: yourusername/django-migraid
+site_url: https://AhmedShehab.github.io/django-migraid
+repo_url: https://github.com/AhmedShehab/django-migraid
+repo_name: AhmedShehab/django-migraid
 
 theme:
   name: material

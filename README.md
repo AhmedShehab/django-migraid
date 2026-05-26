@@ -2,7 +2,7 @@
 
 **Detect, diagnose, and auto-fix Django migration problems in Git workflows.**
 
-[![CI](https://github.com/yourusername/django-migraid/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/django-migraid/actions)
+[![CI](https://github.com/AhmedShehab/django-migraid/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedShehab/django-migraid/actions)
 [![PyPI](https://img.shields.io/pypi/v/django-migraid.svg)](https://pypi.org/project/django-migraid/)
 [![Python](https://img.shields.io/pypi/pyversions/django-migraid.svg)](https://pypi.org/project/django-migraid/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)

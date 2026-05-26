@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-migraid"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "Detect, diagnose, and auto-fix Django migration problems in Git workflows"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "Apache-2.0"
 requires-python = ">=3.10"
 keywords = ["django", "migrations", "git", "rebase", "devtools"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Framework :: Django",
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
@@ -42,10 +42,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/django-migraid"
-Repository = "https://github.com/yourusername/django-migraid"
-Documentation = "https://yourusername.github.io/django-migraid"
-Changelog = "https://github.com/yourusername/django-migraid/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/AhmedShehab/django-migraid"
+Repository = "https://github.com/AhmedShehab/django-migraid"
+Documentation = "https://AhmedShehab.github.io/django-migraid"
+Changelog = "https://github.com/AhmedShehab/django-migraid/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/migraid"]

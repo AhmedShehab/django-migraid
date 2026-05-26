@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0b1] - 2024-05-26
+
+### Added
+- Beta release with initial feature set.
+- All features from 0.1.0-alpha.
+
 ## [0.1.0] - 2024-01-01
 
 ### Added
@@ -21,5 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safety pipeline: dirty-tree guard, applied-migration guard, backup ref, undo log, post-apply validation
 - Apache 2.0 license
 
-[Unreleased]: https://github.com/yourusername/django-migraid/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/yourusername/django-migraid/releases/tag/v0.1.0
+[Unreleased]: https://github.com/AhmedShehab/django-migraid/compare/v0.1.0b1...HEAD
+[0.1.0b1]: https://github.com/AhmedShehab/django-migraid/releases/tag/v0.1.0b1
+[0.1.0]: https://github.com/AhmedShehab/django-migraid/releases/tag/v0.1.0
