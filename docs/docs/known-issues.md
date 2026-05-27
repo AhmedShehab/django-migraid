@@ -26,7 +26,7 @@ This document catalogs the migration problems django-migraid detects and (where 
 
 ---
 
-## E003 — Out-of-Order / Gap Numbering
+## W006 — Out-of-Order / Gap Numbering
 
 **Symptoms:** Migration files numbered `0001`, `0003` (skipping `0002`), or two files with the same prefix after a rebase.
 

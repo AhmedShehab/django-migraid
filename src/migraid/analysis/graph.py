@@ -106,6 +106,8 @@ def dangling_dependencies(
     all_keys = set(nodes.keys())
     for node in nodes.values():
         for dep in node.dependencies:
+            if dep[1] in ("__first__", "__latest__"):
+                continue
             if dep not in all_keys:
                 result.append((node, dep))
     return result

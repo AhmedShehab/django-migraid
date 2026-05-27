@@ -81,3 +81,32 @@ def test_doctor_exits_nonzero_on_errors(tmp_path):
     issues = run_all_detectors(analyzer)
     errors = [i for i in issues if i.severity == Severity.ERROR]
     assert len(errors) >= 1
+
+
+@pytest.mark.django_db
+def test_doctor_exits_zero_on_warnings_only(tmp_path):
+    """doctor exits with 0 when only WARN-level issues (like W006) exist."""
+
+    from django.core.management import call_command
+
+    from tests.conftest import write_migration
+
+    d = tmp_path / "gapapp" / "migrations"
+    d.mkdir(parents=True)
+    (d / "__init__.py").write_text("")
+    write_migration(d, "0001_initial", [])
+    write_migration(d, "0003_gap", [("gapapp", "0001_initial")])
+
+    # We need to mock _get_app_dirs to point to our tmp_path
+    import migraid.management.commands.migraid as migraid_cmd
+
+    original_get_app_dirs = migraid_cmd._get_app_dirs
+    migraid_cmd._get_app_dirs = lambda label=None: [("gapapp", d)]
+
+    try:
+        # call_command catches SystemExit(0) but not SystemExit(1)
+        # However, _handle_doctor calls sys.exit(1) only if there are errors.
+        # If there are only warnings, it should return normally (exit 0).
+        call_command("migraid", "doctor")
+    finally:
+        migraid_cmd._get_app_dirs = original_get_app_dirs

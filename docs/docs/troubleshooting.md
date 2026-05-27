@@ -53,7 +53,7 @@ Run `python manage.py migraid doctor` to find which migration has the broken dep
 **Search Terms:** `django migration gap numbering`, `renumber django migrations`.
 
 **How to fix:**
-Use `renumber` to close the gaps (Error **E003**):
+Use `renumber` to close the gaps (Warning **W006**):
 ```bash
 python manage.py migraid renumber <app>
 ```

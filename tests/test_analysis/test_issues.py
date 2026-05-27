@@ -59,11 +59,12 @@ def test_detect_circular_deps(circular_dep: Path) -> None:
 
 
 def test_detect_numbering_issues(numbering_gap: Path) -> None:
-    analyzer = _analyzer_from_dir("gapapp", numbering_gap)
+    analyzer = MigrationAnalyzer(app_dirs=[("testapp", numbering_gap)])
     issues = detect_numbering_issues(analyzer)
-    assert any(i.code == "E003" for i in issues)
-    e003 = [i for i in issues if i.code == "E003"]
-    assert len(e003) >= 1
+    assert any(i.code == "W006" for i in issues)
+    w006 = [i for i in issues if i.code == "W006"]
+    assert len(w006) >= 1
+    assert "numbering gap" in w006[0].message
 
 
 def test_no_numbering_issues_clean(simple_linear: Path) -> None:
@@ -228,3 +229,18 @@ def test_run_all_detectors_app_filter(tmp_path: Path) -> None:
     analyzer = MigrationAnalyzer(app_dirs=[("appa", d_a), ("appb", d_b)])
     issues = run_all_detectors(analyzer, app="appa")
     assert all(i.app == "appa" for i in issues)
+
+
+def test_dangling_dependencies_ignores_django_specials(tmp_path: Path) -> None:
+    from migraid.analysis.issues import detect_dangling_dependencies
+    from tests.conftest import write_migration
+
+    d = tmp_path / "app" / "migrations"
+    d.mkdir(parents=True)
+    (d / "__init__.py").write_text("")
+    # Migration depending on __first__ and __latest__ of other apps
+    write_migration(d, "0001_initial", [("other", "__first__"), ("another", "__latest__")])
+
+    analyzer = MigrationAnalyzer(app_dirs=[("app", d)])
+    issues = detect_dangling_dependencies(analyzer)
+    assert issues == []

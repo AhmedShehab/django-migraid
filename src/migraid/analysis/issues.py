@@ -83,7 +83,7 @@ def detect_circular_deps(analyzer: MigrationAnalyzer) -> list[Issue]:
 
 
 def detect_numbering_issues(analyzer: MigrationAnalyzer) -> list[Issue]:
-    """E003: out-of-order or gap numbering after topological sort."""
+    """W006: out-of-order or gap numbering after topological sort."""
     issues: list[Issue] = []
     apps = {k[0] for k in analyzer.nodes}
     for app in sorted(apps):
@@ -93,15 +93,17 @@ def detect_numbering_issues(analyzer: MigrationAnalyzer) -> list[Issue]:
             if node.number != expected:
                 issues.append(
                     Issue(
-                        code="E003",
-                        severity=Severity.ERROR,
+                        code="W006",
+                        severity=Severity.WARN,
                         app=app,
                         migration=node.name,
                         message=(
-                            f"Migration is at topological position {expected} "
+                            f"Migration numbering gap: at position {expected} "
                             f"but has number {node.number} ({node.name})"
                         ),
-                        hint=f"Run: python manage.py migraid renumber {app}",
+                        hint=(
+                            f"Run: python manage.py migraid renumber {app} to close numbering gaps."
+                        ),
                         fixable=True,
                         fix_command="renumber",
                     )

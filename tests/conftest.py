@@ -84,7 +84,7 @@ def conflict_scenario(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def numbering_gap(tmp_path: Path) -> Path:
-    """0001 → 0003 (gap at 0002), E003."""
+    """0001 → 0003 (gap at 0002), W006."""
     d = tmp_path / "gapapp" / "migrations"
     d.mkdir(parents=True)
     (d / "__init__.py").write_text("")

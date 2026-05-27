@@ -62,7 +62,7 @@ python manage.py migraid graph myapp --format mermaid
 |-------|------|-----------------------------|---------|
 | Conflicting leaf migrations | E001 | `multiple leaf nodes`, `migration merge conflict` | `fix-conflicts` |
 | Circular migration dependencies | E002 | `CircularDependencyError`, `circular dependency` | — (reports) |
-| Out-of-order numbering | E003 | `gap in numbering`, `renumber migrations` | `renumber` |
+| Out-of-order numbering | W006 | `gap in numbering`, `renumber migrations` | `renumber` |
 | Dependency on a deleted migration | E004 | `NodeNotFoundError`, `missing dependency` | — (reports) |
 | Renamed applied migration | E005 | `InconsistentMigrationHistory`, `table desync` | `rebase`/`renumber`/`fix-conflicts --update-db` |
 | Stale `django_migrations` rows | W001 | `ghost migrations`, `remove from django_migrations` | `prune` |
