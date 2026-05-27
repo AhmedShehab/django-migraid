@@ -18,7 +18,7 @@ theme:
 nav:
   - Home: index.md
   - Known Issues: known-issues.md
-  - Syncing the migrations table: sync-db.md
+  - Updating the migrations table: update-db.md
   - Commands:
       - doctor: commands/doctor.md
       - rebase: commands/rebase.md
@@ -26,6 +26,7 @@ nav:
       - linearize: commands/linearize.md
       - renumber: commands/renumber.md
       - prune: commands/prune.md
+      - sync-branch: commands/sync-branch.md
       - graph: commands/graph.md
 
 markdown_extensions:

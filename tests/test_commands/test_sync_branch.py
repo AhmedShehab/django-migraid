@@ -64,11 +64,10 @@ def test_plan_empty_when_all_tracked() -> None:
     assert plan.is_empty()
 
 
-def test_plan_stale_row_when_file_missing(tmp_path: Path) -> None:
+def test_plan_stale_row_goes_to_unauthorized_without_update_db(tmp_path: Path) -> None:
+    """Without update_db, stale rows accumulate in unauthorized_stale, not stale_rows."""
     mdir = tmp_path / "myapp" / "migrations"
     mdir.mkdir(parents=True)
-    (mdir / "0001_initial.py").write_text("")
-    # 0002_deleted has no file on disk
 
     applied = {("myapp", "0001_initial"): object(), ("myapp", "0002_deleted"): object()}
     tracked = {("myapp", "0001_initial")}
@@ -76,15 +75,32 @@ def test_plan_stale_row_when_file_missing(tmp_path: Path) -> None:
 
     plan = build_sync_branch_plan(guard, [("myapp", mdir)], applied)
 
+    assert plan.stale_rows == []
+    assert plan.unauthorized_stale == 1
+
+
+def test_plan_stale_row_when_file_missing_with_update_db(tmp_path: Path) -> None:
+    """With update_db=True, stale rows with no file on disk go to stale_rows."""
+    mdir = tmp_path / "myapp" / "migrations"
+    mdir.mkdir(parents=True)
+    (mdir / "0001_initial.py").write_text("")
+
+    applied = {("myapp", "0001_initial"): object(), ("myapp", "0002_deleted"): object()}
+    tracked = {("myapp", "0001_initial")}
+    guard = _make_guard(tracked_keys=tracked)
+
+    plan = build_sync_branch_plan(guard, [("myapp", mdir)], applied, update_db=True)
+
     assert ("myapp", "0002_deleted") in plan.stale_rows
     assert plan.schema_targets == {}
+    assert plan.unauthorized_stale == 0
 
 
 def test_plan_schema_mode_file_on_disk(tmp_path: Path) -> None:
     mdir = tmp_path / "myapp" / "migrations"
     mdir.mkdir(parents=True)
     (mdir / "0001_initial.py").write_text("")
-    (mdir / "0002_local.py").write_text("")  # file exists but untracked
+    (mdir / "0002_local.py").write_text("")
 
     applied = {("myapp", "0001_initial"): object(), ("myapp", "0002_local"): object()}
     tracked = {("myapp", "0001_initial")}
@@ -97,12 +113,13 @@ def test_plan_schema_mode_file_on_disk(tmp_path: Path) -> None:
 
     assert ("myapp", "0002_local") not in plan.stale_rows
     assert plan.schema_targets.get("myapp") == "0001_initial"
+    assert plan.unauthorized_stale == 0
 
 
-def test_plan_schema_mode_no_file_on_disk(tmp_path: Path) -> None:
+def test_plan_schema_mode_no_file_on_disk_goes_to_unauthorized(tmp_path: Path) -> None:
+    """With schema=True but no file on disk, the row is unauthorized (no --update-db)."""
     mdir = tmp_path / "myapp" / "migrations"
     mdir.mkdir(parents=True)
-    # 0002_deleted has no file on disk
 
     applied = {("myapp", "0001_initial"): object(), ("myapp", "0002_deleted"): object()}
     tracked = {("myapp", "0001_initial")}
@@ -110,8 +127,25 @@ def test_plan_schema_mode_no_file_on_disk(tmp_path: Path) -> None:
 
     plan = build_sync_branch_plan(guard, [("myapp", mdir)], applied, schema=True)
 
+    assert plan.stale_rows == []
+    assert "myapp" not in plan.schema_targets
+    assert plan.unauthorized_stale == 1
+
+
+def test_plan_schema_mode_no_file_with_update_db(tmp_path: Path) -> None:
+    """schema=True + update_db=True + no file on disk → stale_rows (row delete only)."""
+    mdir = tmp_path / "myapp" / "migrations"
+    mdir.mkdir(parents=True)
+
+    applied = {("myapp", "0001_initial"): object(), ("myapp", "0002_deleted"): object()}
+    tracked = {("myapp", "0001_initial")}
+    guard = _make_guard(tracked_keys=tracked)
+
+    plan = build_sync_branch_plan(guard, [("myapp", mdir)], applied, update_db=True, schema=True)
+
     assert ("myapp", "0002_deleted") in plan.stale_rows
     assert "myapp" not in plan.schema_targets
+    assert plan.unauthorized_stale == 0
 
 
 def test_plan_reports_untracked_files(tmp_path: Path) -> None:
@@ -131,7 +165,7 @@ def test_plan_schema_target_none_when_no_tracked_migrations(tmp_path: Path) -> N
     (mdir / "0001_initial.py").write_text("")
 
     applied = {("myapp", "0001_initial"): object()}
-    tracked: set[tuple[str, str]] = set()  # nothing tracked
+    tracked: set[tuple[str, str]] = set()
     guard = _make_guard(tracked_keys=tracked, highest_stems={"myapp": None})
 
     plan = build_sync_branch_plan(guard, [("myapp", mdir)], applied, schema=True)
@@ -210,7 +244,33 @@ def test_cmd_dry_run_shows_preview_no_changes(monkeypatch, tmp_path, capsys) -> 
 
 
 @pytest.mark.django_db(transaction=True)
-def test_cmd_deletes_stale_rows_and_files(monkeypatch, tmp_path) -> None:
+def test_cmd_default_deletes_files_not_rows(monkeypatch, tmp_path, capsys) -> None:
+    """Default sync-branch (no --update-db) deletes untracked files but NOT rows."""
+    fake_file = tmp_path / "myapp" / "migrations" / "0002_local.py"
+    fake_file.parent.mkdir(parents=True)
+    fake_file.write_text("# stub")
+
+    # Simulate plan with files to delete and a stale row hint (unauthorized)
+    plan = SyncBranchPlan(
+        untracked_files=[fake_file],
+        unauthorized_stale=1,
+    )
+    _patch_guard(monkeypatch)
+    _patch_sync_branch(monkeypatch, plan)
+    _patch_app_dirs(monkeypatch)
+
+    call_command("migraid", "sync-branch", "--yes")
+
+    out = capsys.readouterr().out
+    # File was deleted
+    assert not fake_file.exists()
+    # Hint about --update-db was shown
+    assert "--update-db" in out
+
+
+@pytest.mark.django_db(transaction=True)
+def test_cmd_update_db_deletes_stale_rows_and_files(monkeypatch, tmp_path) -> None:
+    """--update-db deletes stale rows and untracked files."""
     recorder = _record("branchapp", "0002_feature")
 
     fake_file = tmp_path / "branchapp" / "migrations" / "0002_feature.py"
@@ -226,7 +286,7 @@ def test_cmd_deletes_stale_rows_and_files(monkeypatch, tmp_path) -> None:
     _patch_app_dirs(monkeypatch)
 
     try:
-        call_command("migraid", "sync-branch", "--yes")
+        call_command("migraid", "sync-branch", "--update-db", "--yes")
 
         assert not fake_file.exists()
         assert not recorder.Migration.objects.filter(
@@ -243,19 +303,8 @@ def test_cmd_schema_calls_migrate(monkeypatch) -> None:
     _patch_sync_branch(monkeypatch, plan)
     _patch_app_dirs(monkeypatch)
 
-    migrate_calls: list[tuple] = []
-
-    def _fake_migrate(*args, **kwargs):
-        migrate_calls.append((args, kwargs))
-
-    import migraid.management.commands.migraid as cmd
-
-    monkeypatch.setattr(cmd, "_call_migrate_for_schema", _fake_migrate, raising=False)
-
-    # Patch the local import inside the handler
     with patch("django.core.management.call_command") as mock_cc:
         call_command("migraid", "sync-branch", "--yes", "--schema")
-        # Should have called migrate for myapp -> 0001_initial
         schema_calls = [c for c in mock_cc.call_args_list if c.args and c.args[0] == "migrate"]
         assert any("myapp" in str(c) for c in schema_calls)
 
@@ -280,7 +329,6 @@ def test_cmd_aborts_on_no_confirm(monkeypatch, capsys) -> None:
     _patch_sync_branch(monkeypatch, plan)
     _patch_app_dirs(monkeypatch)
 
-    # Simulate user typing "n" at the prompt
     with patch("builtins.input", return_value="n"):
         call_command("migraid", "sync-branch")
 

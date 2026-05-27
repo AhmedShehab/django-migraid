@@ -6,7 +6,7 @@ migration depends on exactly one predecessor.
 ## Usage
 
 ```bash
-python manage.py migraid linearize [--app LABEL] [--strip-cross-app] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+python manage.py migraid linearize [--app LABEL] [--strip-cross-app] [--dry-run] [--yes] [--force] [--allow-applied] [--update-db] [--noinput] [--database ALIAS]
 ```
 
 ## Description
@@ -59,10 +59,10 @@ nodes: renumbered, with their `replaces` entries rewritten to match.
 
 ## Keeping the database in sync
 
-If any renamed or deleted migration has already been applied, add `--sync-db` to
+If any renamed or deleted migration has already been applied, add `--update-db` to
 update the matching `django_migrations` rows in the same atomic, reversible step
 (implies `--allow-applied`). Renames become `UPDATE`s that preserve the original
 `applied` timestamp; a removed applied merge becomes a `DELETE` with a matching
-re-`INSERT` in the undo script. Use `--no-input` for CI and `--database ALIAS`
+re-`INSERT` in the undo script. Use `--noinput` for CI and `--database ALIAS`
 to target a non-default connection. See
-[Syncing the `django_migrations` table](../sync-db.md).
+[Syncing the `django_migrations` table](../update-db.md).

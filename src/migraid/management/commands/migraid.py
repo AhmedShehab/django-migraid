@@ -68,19 +68,28 @@ def _get_migrations_dir(app_label: str) -> Path:
     return Path(app_config.path) / "migrations"
 
 
-def _add_sync_args(parser: CommandParser) -> None:
-    """Shared --sync-db / --no-input / --database flags for the rename commands."""
+def _add_db_sync_args(parser: CommandParser) -> None:
+    """Shared --update-db / --noinput / --database flags for the rewrite commands."""
     parser.add_argument(
-        "--sync-db",
+        "--update-db",
         action="store_true",
+        dest="update_db",
         help=(
-            "Rename matching django_migrations rows for applied migrations "
+            "Also rename matching django_migrations rows for applied migrations "
             "(preserves the applied timestamp). Implies --allow-applied."
         ),
     )
+    # Deprecated alias — hidden so it doesn't appear in --help
     parser.add_argument(
-        "--no-input",
+        "--sync-db",
+        action="store_true",
+        dest="update_db",
+        help="Deprecated: use --update-db.",
+        default=False,
+    )
+    parser.add_argument(
         "--noinput",
+        "--no-input",
         action="store_true",
         dest="no_input",
         help="Run non-interactively (CI): skip the confirmation prompt. Alias for --yes.",
@@ -89,7 +98,7 @@ def _add_sync_args(parser: CommandParser) -> None:
         "--database",
         default="default",
         metavar="ALIAS",
-        help="Database alias whose django_migrations table to sync (default: default).",
+        help="Database alias whose django_migrations table to update (default: default).",
     )
 
 
@@ -136,7 +145,7 @@ def _execute_plan(
     executor: PlanExecutor,
     guard: GitGuard | None,
     *,
-    sync_db: bool = False,
+    update_db: bool = False,
     db_alias: str = "default",
 ) -> None:
     if plan.is_empty():
@@ -146,10 +155,10 @@ def _execute_plan(
     output.print_plan_summary(plan.description, len(plan.renames))
     executor.preview(plan)
 
-    # Build the django_migrations sync plan up front so collisions abort before
-    # any file is touched, and so the preview shows exactly what the DB sync does.
+    # Build the django_migrations update plan up front so collisions abort before
+    # any file is touched, and so the preview shows exactly what the DB update does.
     sync_plan = None
-    if sync_db:
+    if update_db:
         from django.db import connections
 
         connection = connections[db_alias]
@@ -306,7 +315,7 @@ class Command(BaseCommand):
             action="store_true",
             help="Allow renaming applied migrations (dangerous)",
         )
-        _add_sync_args(rebase)
+        _add_db_sync_args(rebase)
 
         # fix-conflicts
         fc = subparsers.add_parser("fix-conflicts", help="Linearize conflicting leaf migrations")
@@ -315,7 +324,7 @@ class Command(BaseCommand):
         fc.add_argument("--yes", action="store_true")
         fc.add_argument("--force", action="store_true")
         fc.add_argument("--allow-applied", action="store_true")
-        _add_sync_args(fc)
+        _add_db_sync_args(fc)
 
         # linearize
         lin = subparsers.add_parser(
@@ -332,7 +341,7 @@ class Command(BaseCommand):
         lin.add_argument("--yes", action="store_true", help="Skip confirmation")
         lin.add_argument("--force", action="store_true", help="Skip dirty-tree check")
         lin.add_argument("--allow-applied", action="store_true")
-        _add_sync_args(lin)
+        _add_db_sync_args(lin)
 
         # renumber
         rn = subparsers.add_parser("renumber", help="Fix gap/duplicate numbering for an app")
@@ -341,23 +350,32 @@ class Command(BaseCommand):
         rn.add_argument("--yes", action="store_true")
         rn.add_argument("--force", action="store_true")
         rn.add_argument("--allow-applied", action="store_true")
-        _add_sync_args(rn)
+        _add_db_sync_args(rn)
 
         # prune
         prune = subparsers.add_parser(
-            "prune", help="Remove stale django_migrations rows (dry-run by default)"
+            "prune", help="Remove stale django_migrations rows"
+        )
+        prune.add_argument("--dry-run", action="store_true", help="Preview only, no rows deleted")
+        prune.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
+        prune.add_argument(
+            "--noinput",
+            "--no-input",
+            action="store_true",
+            dest="no_input",
+            help="Alias for --yes (non-interactive / CI).",
         )
         prune.add_argument(
-            "--dry-run",
-            action="store_true",
-            default=True,
-            help="Preview only (default — use --yes to execute)",
+            "--database",
+            default="default",
+            metavar="ALIAS",
+            help="Database alias to prune (default: default).",
         )
-        prune.add_argument("--yes", action="store_true", help="Actually delete rows")
         prune.add_argument(
-            "--allow-applied",
+            "--allow-remote-db",
             action="store_true",
-            help="Allow running against non-local databases",
+            dest="allow_remote_db",
+            help="Allow pruning against a non-local database host.",
         )
 
         # graph
@@ -373,23 +391,29 @@ class Command(BaseCommand):
         # sync-branch
         sb = subparsers.add_parser(
             "sync-branch",
-            help="Align local DB and migration files to the current git branch state",
+            help="Align migration files (and optionally the DB) to the current git branch state",
         )
         sb.add_argument("--app", metavar="LABEL", help="Limit to one app")
-        sb.add_argument("--dry-run", action="store_true")
-        sb.add_argument("--yes", action="store_true", help="Skip confirmation")
+        sb.add_argument("--dry-run", action="store_true", help="Preview only, no changes made")
+        sb.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
         sb.add_argument(
-            "--no-input",
             "--noinput",
+            "--no-input",
             action="store_true",
             dest="no_input",
-            help="Run non-interactively (CI): skip the confirmation prompt.",
+            help="Alias for --yes (non-interactive / CI).",
         )
         sb.add_argument(
             "--database",
             default="default",
             metavar="ALIAS",
             help="Database alias to inspect (default: default).",
+        )
+        sb.add_argument(
+            "--update-db",
+            action="store_true",
+            dest="update_db",
+            help="Also delete stale django_migrations rows for branch-excess applied migrations.",
         )
         sb.add_argument(
             "--schema",
@@ -401,6 +425,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *_args: Any, **options: Any) -> None:  # noqa: ANN401
+        if "--sync-db" in sys.argv:
+            sys.stderr.write(
+                "Warning: --sync-db is deprecated and will be removed in a future release. "
+                "Use --update-db instead.\n"
+            )
         subcommand: str = options["subcommand"]
         handler = getattr(self, f"_handle_{subcommand.replace('-', '_')}")
         handler(options)
@@ -455,10 +484,10 @@ class Command(BaseCommand):
         dry_run: bool = options.get("dry_run", False)
         yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
-        sync_db: bool = options.get("sync_db", False)
+        update_db: bool = options.get("update_db", False)
         db_alias: str = options.get("database", "default")
-        # --sync-db keeps the DB in step, so it safely unblocks applied renames.
-        allow_applied: bool = options.get("allow_applied", False) or sync_db
+        # --update-db renames rows in step with files, so applied renames are safe.
+        allow_applied: bool = options.get("allow_applied", False) or update_db
 
         from django.db import connections
 
@@ -477,7 +506,7 @@ class Command(BaseCommand):
         output = ConsoleOutput(yes=yes)
         executor = PlanExecutor(dry_run=dry_run, output=output)
         _execute_plan(
-            plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+            plan, analyzer, app, output, executor, guard, update_db=update_db, db_alias=db_alias
         )
 
     # ------------------------------------------------------------------
@@ -489,9 +518,9 @@ class Command(BaseCommand):
         dry_run: bool = options.get("dry_run", False)
         yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
-        sync_db: bool = options.get("sync_db", False)
+        update_db: bool = options.get("update_db", False)
         db_alias: str = options.get("database", "default")
-        allow_applied: bool = options.get("allow_applied", False) or sync_db
+        allow_applied: bool = options.get("allow_applied", False) or update_db
 
         from django.db import connections
 
@@ -521,7 +550,7 @@ class Command(BaseCommand):
             plan = build_fix_conflicts_plan(analyzer.nodes, app, migrations_dir)
             executor = PlanExecutor(dry_run=dry_run, output=output)
             _execute_plan(
-                plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+                plan, analyzer, app, output, executor, guard, update_db=update_db, db_alias=db_alias
             )
 
     # ------------------------------------------------------------------
@@ -534,9 +563,9 @@ class Command(BaseCommand):
         yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
         strip_cross_app: bool = options.get("strip_cross_app", False)
-        sync_db: bool = options.get("sync_db", False)
+        update_db: bool = options.get("update_db", False)
         db_alias: str = options.get("database", "default")
-        allow_applied: bool = options.get("allow_applied", False) or sync_db
+        allow_applied: bool = options.get("allow_applied", False) or update_db
 
         from django.db import connections
 
@@ -566,7 +595,7 @@ class Command(BaseCommand):
                 raise CommandError(str(exc)) from exc
             executor = PlanExecutor(dry_run=dry_run, output=output)
             _execute_plan(
-                plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+                plan, analyzer, app, output, executor, guard, update_db=update_db, db_alias=db_alias
             )
 
     # ------------------------------------------------------------------
@@ -579,9 +608,9 @@ class Command(BaseCommand):
         dry_run: bool = options.get("dry_run", False)
         yes: bool = options.get("yes", False) or options.get("no_input", False)
         force: bool = options.get("force", False)
-        sync_db: bool = options.get("sync_db", False)
+        update_db: bool = options.get("update_db", False)
         db_alias: str = options.get("database", "default")
-        allow_applied: bool = options.get("allow_applied", False) or sync_db
+        allow_applied: bool = options.get("allow_applied", False) or update_db
 
         from django.db import connections
 
@@ -630,7 +659,7 @@ class Command(BaseCommand):
             )
             executor = PlanExecutor(dry_run=dry_run, output=output)
             _execute_plan(
-                plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+                plan, analyzer, app, output, executor, guard, update_db=update_db, db_alias=db_alias
             )
 
     # ------------------------------------------------------------------
@@ -638,14 +667,17 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------
 
     def _handle_prune(self, options: dict[str, Any]) -> None:
-        yes: bool = options.get("yes", False)
-        dry_run: bool = not yes
-        allow_applied: bool = options.get("allow_applied", False)
+        dry_run: bool = options.get("dry_run", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
+        allow_remote_db: bool = options.get("allow_remote_db", False)
+        db_alias: str = options.get("database", "default")
 
-        from django.db import connection
+        from django.db import connections
 
-        # Safety: refuse non-local DB unless --allow-applied
-        if not allow_applied and not dry_run:
+        connection = connections[db_alias]
+
+        # Safety: refuse non-local DB unless --allow-remote-db
+        if not allow_remote_db and not dry_run:
             db_settings = connection.settings_dict
             engine = db_settings.get("ENGINE", "")
             host = db_settings.get("HOST", "localhost") or "localhost"
@@ -653,7 +685,7 @@ class Command(BaseCommand):
             if not is_local:
                 raise CommandError(
                     f"Database host '{host}' doesn't look local. "
-                    "Use --allow-applied to allow pruning on non-local databases."
+                    "Use --allow-remote-db to allow pruning on non-local databases."
                 )
 
         app_dirs = _get_app_dirs()
@@ -761,6 +793,7 @@ class Command(BaseCommand):
         dry_run: bool = options.get("dry_run", False)
         yes: bool = options.get("yes", False) or options.get("no_input", False)
         db_alias: str = options.get("database", "default")
+        update_db: bool = options.get("update_db", False)
         schema: bool = options.get("schema", False)
 
         from django.db import connections
@@ -778,8 +811,15 @@ class Command(BaseCommand):
         analyzer = MigrationAnalyzer(app_dirs=app_dirs, connection=connection)
         applied = analyzer.applied_migrations()
 
-        plan = build_sync_branch_plan(guard, app_dirs, applied, schema=schema)
+        plan = build_sync_branch_plan(guard, app_dirs, applied, update_db=update_db, schema=schema)
         output = ConsoleOutput(yes=yes)
+
+        # Surface a hint when stale rows exist but --update-db was not given
+        if plan.unauthorized_stale:
+            output.info(
+                f"{plan.unauthorized_stale} stale django_migrations row(s) found "
+                "— re-run with --update-db to remove them."
+            )
 
         if plan.is_empty():
             output.success("sync-branch: nothing to do.")

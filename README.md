@@ -38,7 +38,7 @@ python manage.py migraid doctor
 python manage.py migraid rebase --base main --dry-run
 
 # Rebase AND keep django_migrations in sync for applied migrations (CI-friendly)
-python manage.py migraid rebase --base main --sync-db --no-input
+python manage.py migraid rebase --base main --update-db --noinput
 
 # Fix conflicting leaf migrations
 python manage.py migraid fix-conflicts --dry-run
@@ -47,7 +47,10 @@ python manage.py migraid fix-conflicts --dry-run
 python manage.py migraid renumber myapp --dry-run
 
 # Remove stale django_migrations rows
-python manage.py migraid prune
+python manage.py migraid prune --yes
+
+# Clean up untracked migration files after switching branches
+python manage.py migraid sync-branch --dry-run
 
 # Visualize the migration DAG
 python manage.py migraid graph myapp --format mermaid
@@ -61,7 +64,7 @@ python manage.py migraid graph myapp --format mermaid
 | Circular migration dependencies | E002 | — (reports) |
 | Out-of-order / gap numbering after rebase | E003 | `renumber` |
 | Dependency on a deleted migration | E004 | — (reports) |
-| Renamed applied migration (table desync) | E005 | `rebase`/`renumber`/`fix-conflicts --sync-db` |
+| Renamed applied migration (table desync) | E005 | `rebase`/`renumber`/`fix-conflicts --update-db` |
 | Stale `django_migrations` rows | W001 | `prune` |
 | `RunPython` without `reverse_code` | W002 | — (reports) |
 | Squashed migration with old files still present | W003 | — (reports) |
@@ -71,6 +74,14 @@ python manage.py migraid graph myapp --format mermaid
 | `--fake` / `--fake-initial` footgun patterns | I002 | — (reports) |
 
 ## Command Reference
+
+Commands fall into three groups:
+
+**Diagnose (read-only):** `doctor`, `graph`
+
+**Rewrite migration files:** `rebase`, `fix-conflicts`, `linearize`, `renumber` — file plane only by default; pass `--update-db` to also rename `django_migrations` rows.
+
+**Repair DB / branch state:** `prune`, `sync-branch` — these commands exist to fix the database or file state directly.
 
 ### `doctor`
 
@@ -85,7 +96,7 @@ python manage.py migraid doctor [--app LABEL] [--format text|json]
 Renumber local branch migrations to follow the latest from a target branch.
 
 ```bash
-python manage.py migraid rebase [--base BRANCH] [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+python manage.py migraid rebase [--base BRANCH] [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--update-db] [--noinput] [--database ALIAS]
 ```
 
 ### `fix-conflicts`
@@ -93,7 +104,7 @@ python manage.py migraid rebase [--base BRANCH] [--app LABEL] [--dry-run] [--yes
 Resolve multiple-leaf conflicts by linearizing the fork.
 
 ```bash
-python manage.py migraid fix-conflicts [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+python manage.py migraid fix-conflicts [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--update-db] [--noinput] [--database ALIAS]
 ```
 
 ### `linearize`
@@ -101,7 +112,7 @@ python manage.py migraid fix-conflicts [--app LABEL] [--dry-run] [--yes] [--forc
 Rewrite history into a gap-free `0001..N` chain where each migration depends on exactly one predecessor — renumbering, collapsing redundant dependency lists, resolving forks, and deleting merge migrations in one pass. Cross-app dependencies are preserved by default (`--strip-cross-app` to drop them).
 
 ```bash
-python manage.py migraid linearize [--app LABEL] [--strip-cross-app] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+python manage.py migraid linearize [--app LABEL] [--strip-cross-app] [--dry-run] [--yes] [--force] [--allow-applied] [--update-db] [--noinput] [--database ALIAS]
 ```
 
 ### `renumber`
@@ -109,7 +120,7 @@ python manage.py migraid linearize [--app LABEL] [--strip-cross-app] [--dry-run]
 Fix gap or duplicate numbering in a single app's migrations.
 
 ```bash
-python manage.py migraid renumber <app> [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+python manage.py migraid renumber <app> [--dry-run] [--yes] [--force] [--allow-applied] [--update-db] [--noinput] [--database ALIAS]
 ```
 
 ### `prune`
@@ -117,7 +128,15 @@ python manage.py migraid renumber <app> [--dry-run] [--yes] [--force] [--allow-a
 Remove orphaned `django_migrations` rows for migrations no longer on disk.
 
 ```bash
-python manage.py migraid prune [--dry-run] [--yes] [--allow-applied]
+python manage.py migraid prune [--dry-run] [--yes] [--noinput] [--database ALIAS] [--allow-remote-db]
+```
+
+### `sync-branch`
+
+Align local migration files (and optionally the database) to the current git branch state. Detects untracked migration files and optionally removes stale `django_migrations` rows or reverses applied schema changes.
+
+```bash
+python manage.py migraid sync-branch [--app LABEL] [--dry-run] [--yes] [--noinput] [--database ALIAS] [--update-db] [--schema]
 ```
 
 ### `graph`
@@ -130,22 +149,28 @@ python manage.py migraid graph [app] [--format mermaid|dot|ascii] [--output FILE
 
 ## Safety Model
 
-Every mutation command:
-1. Checks for uncommitted git changes (bypass with `--force`)
-2. Guards against rewriting already-applied migrations (bypass with `--allow-applied`)
+**Commands act on the file plane by default. Any DB change requires an explicit flag.**
+
+- `--update-db` authorizes renaming `django_migrations` rows in step with file renames (rewrite commands) or deleting stale rows (sync-branch).
+- `--schema` authorizes running `migrate` backwards to reverse schema changes (sync-branch only).
+- `prune` and `sync-branch` are inherently DB/file-repair commands — running them is the authorization, and they always preview + confirm before writing.
+
+Every mutation command also:
+1. Checks for uncommitted git changes (bypass with `--force` on rewrite commands)
+2. Guards against rewriting already-applied migrations (bypass with `--allow-applied`, or use `--update-db` which implies it)
 3. Creates a `migraid-backup-<timestamp>` git ref before any writes
 4. Shows a diff-style preview before making changes
-5. Asks for confirmation (bypass with `--yes`)
+5. Asks for confirmation (bypass with `--yes` / `--noinput`)
 6. Maintains an undo log — reverses all file ops automatically if anything fails
 7. Self-validates after apply: if the migration graph gets worse, auto-reverts
 
 `--dry-run` on any mutation command prints the full preview without writing.
 
-When renaming **applied** migrations, `--sync-db` renames the matching
+When renaming **applied** migrations, `--update-db` renames the matching
 `django_migrations` rows in the same per-app `transaction.atomic()` block as the
 file changes (preserving the `applied` timestamp), writes a replayable
 inverse-SQL undo script, and rolls back *both* files and rows on any failure.
-See the [sync-db guide](https://AhmedShehab.github.io/django-migraid/sync-db/).
+See the [--update-db guide](https://AhmedShehab.github.io/django-migraid/update-db/).
 
 ## CI Integration
 

@@ -180,8 +180,8 @@ def detect_renamed_applied(analyzer: MigrationAnalyzer) -> list[Issue]:
                     f"disk has '{node.name}' (same migration, renamed) — DB is desynced"
                 ),
                 hint=(
-                    "Likely a file-only rename (--allow-applied without --sync-db). "
-                    "Revert the rename in git and re-run with --sync-db, or run: "
+                    "Likely a file-only rename (--allow-applied without --update-db). "
+                    "Revert the rename in git and re-run with --update-db, or run: "
                     f"UPDATE django_migrations SET name='{node.name}' "
                     f"WHERE app='{old_key[0]}' AND name='{old_key[1]}';"
                 ),

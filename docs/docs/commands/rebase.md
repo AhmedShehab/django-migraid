@@ -5,7 +5,7 @@ Renumber local branch migrations to follow the latest from a target branch.
 ## Usage
 
 ```bash
-python manage.py migraid rebase [--base BRANCH] [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+python manage.py migraid rebase [--base BRANCH] [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--update-db] [--noinput] [--database ALIAS]
 ```
 
 ## Description
@@ -14,7 +14,7 @@ The `rebase` command helps linearize your branch's migrations when parallel deve
 
 ## Keeping the database in sync
 
-If any renamed migration has already been applied, add `--sync-db` to rename the
+If any renamed migration has already been applied, add `--update-db` to rename the
 matching `django_migrations` rows in the same atomic, reversible step (implies
-`--allow-applied`). Use `--no-input` for CI and `--database ALIAS` to target a
-non-default connection. See [Syncing the `django_migrations` table](../sync-db.md).
+`--allow-applied`). Use `--noinput` for CI and `--database ALIAS` to target a
+non-default connection. See [Syncing the `django_migrations` table](../update-db.md).

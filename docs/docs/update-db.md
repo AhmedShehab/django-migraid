@@ -1,24 +1,25 @@
-# Syncing the `django_migrations` table
+# Updating the `django_migrations` table (`--update-db`)
 
-When `rebase`, `renumber`, or `fix-conflicts` rename a migration **that has
-already been applied**, the file on disk changes but Django's bookkeeping does
-not: the `django_migrations` table still records the old stem. Django then sees
-the new file as unapplied and the old name as missing — a desync that breaks
-`migrate`.
+When `rebase`, `renumber`, `fix-conflicts`, or `linearize` rename a migration
+**that has already been applied**, the file on disk changes but Django's
+bookkeeping does not: the `django_migrations` table still records the old stem.
+Django then sees the new file as unapplied and the old name as missing — a desync
+that breaks `migrate`.
 
-The `--sync-db` flag closes that gap. It renames the matching
+The `--update-db` flag closes that gap. It renames the matching
 `django_migrations` rows in lockstep with the files, in one atomic, reversible
 operation.
 
 ## Usage
 
 ```bash
-python manage.py migraid rebase --base main --sync-db
-python manage.py migraid renumber myapp --sync-db
-python manage.py migraid fix-conflicts --sync-db
+python manage.py migraid rebase --base main --update-db
+python manage.py migraid renumber myapp --update-db
+python manage.py migraid fix-conflicts --update-db
+python manage.py migraid linearize --update-db
 ```
 
-`--sync-db` **implies `--allow-applied`**: because it keeps the table in step,
+`--update-db` **implies `--allow-applied`**: because it keeps the table in step,
 renaming applied migrations is safe. (Bare `--allow-applied` still renames files
 only and will desync the table — `doctor` flags the result as **E005**.)
 
@@ -39,7 +40,7 @@ deleted and re-inserted. Several guarantees back this up:
   mismatch, a post-apply validation regression, an I/O error — the file changes
   are rolled back *and* the transaction is rolled back. You end up exactly where
   you started.
-- **Collision-safe.** If a target name already names a different row, the sync
+- **Collision-safe.** If a target name already names a different row, the update
   aborts before touching anything.
 - **Self-verifying.** Each `UPDATE` must affect exactly one row, or the whole
   operation rolls back.
@@ -54,7 +55,7 @@ deleted and re-inserted. Several guarantees back this up:
 
 ## Previewing changes
 
-Without `--no-input`, the command prints the target database, a table of every
+Without `--noinput`, the command prints the target database, a table of every
 row it will rename (with the `applied` timestamp it will preserve), and the
 literal SQL — then asks for confirmation:
 
@@ -70,34 +71,39 @@ Apply these changes? [y/N]
 `--dry-run` shows the same preview and writes nothing — no files, no rows, no
 undo script.
 
-## Pipelines (`--no-input`)
+## Pipelines (`--noinput`)
 
-For CI, `--no-input` (alias: `--yes`) skips the confirmation prompt:
+For CI, `--noinput` (alias: `--yes`) skips the confirmation prompt:
 
 ```bash
-python manage.py migraid rebase --base main --sync-db --no-input
+python manage.py migraid rebase --base main --update-db --noinput
 ```
 
 The target database is still echoed for the audit log. There is no local-host
-restriction — syncing is a deliberate, opt-in operation meant to run against
+restriction — updating is a deliberate, opt-in operation meant to run against
 real databases — so make sure the job points at the database you intend.
 
 ## Choosing the database
 
-`--database ALIAS` selects which connection's `django_migrations` table to sync
+`--database ALIAS` selects which connection's `django_migrations` table to update
 (default: `default`), mirroring Django's `migrate --database`:
 
 ```bash
-python manage.py migraid rebase --sync-db --database replica --no-input
+python manage.py migraid rebase --update-db --database replica --noinput
 ```
 
-Run the command once per database alias you need to sync.
+Run the command once per database alias you need to update.
 
 ## Recovering from an existing desync
 
 If a migration was already renamed file-only (e.g. `--allow-applied` without
-`--sync-db`), there is no rename in flight for `--sync-db` to attach to.
+`--update-db`), there is no rename in flight for `--update-db` to attach to.
 `doctor` reports it as **E005** with the exact recovery SQL. Either:
 
-1. Revert the file rename in git, then re-run the command with `--sync-db`; or
+1. Revert the file rename in git, then re-run the command with `--update-db`; or
 2. Run the `UPDATE` from the `doctor` hint by hand.
+
+## Deprecated alias
+
+`--sync-db` is a deprecated alias for `--update-db`. It still works but prints a
+warning. It will be removed in a future release.

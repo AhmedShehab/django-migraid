@@ -58,7 +58,7 @@ This document catalogs the migration problems django-migraid detects and (where 
 
 **Manual fix:** `UPDATE django_migrations SET name='<new>' WHERE app='<app>' AND name='<old>';` (the exact statement is in the `doctor` hint), or revert the file rename in git.
 
-**Auto-fix:** Re-run the rename command with [`--sync-db`](sync-db.md), which renames the file and the row together. Going forward, always pass `--sync-db` instead of `--allow-applied` when renaming applied migrations.
+**Auto-fix:** Re-run the rename command with [`--update-db`](update-db.md), which renames the file and the row together. Going forward, always pass `--update-db` instead of `--allow-applied` when renaming applied migrations.
 
 ---
 
@@ -70,7 +70,7 @@ This document catalogs the migration problems django-migraid detects and (where 
 
 **Manual fix:** Manually delete the orphaned rows from `django_migrations`.
 
-**Auto-fix:** `python manage.py migraid prune` (dry-run by default, requires `--yes` to execute).
+**Auto-fix:** `python manage.py migraid prune --yes` (previews and confirms before deleting; add `--dry-run` to preview without any prompt).
 
 ---
 

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0b2] - 2026-05-27
+
+### Added
+- `sync-branch` subcommand: align local migration files (and optionally the DB) to the current git branch state. Detects and deletes untracked migration files; with `--update-db` also removes stale `django_migrations` rows; with `--schema` runs `migrate` backwards for apps whose applied state exceeds the git-tracked state.
+
+### Changed
+- **Renamed flag: `--sync-db` → `--update-db`** on `rebase`, `fix-conflicts`, `linearize`, and `renumber`. The old `--sync-db` remains as a deprecated alias (emits a warning) and will be removed in a future release.
+- `sync-branch` is now **file-plane by default** — DB rows are only touched with `--update-db`. This enforces the safety model: no DB change without an explicit flag.
+- **Standardized flags across all mutation commands:** `--dry-run` (default OFF), `--yes`, `--noinput` (alias of `--yes`), `--database ALIAS`. `prune` now previews and prompts by default instead of requiring `--dry-run`.
+- Removed the `--no-input` spelling (kept only `--noinput`, matching Django's convention).
+- Docs renamed `sync-db.md` → `update-db.md`; updated all cross-references.
+
+### Breaking Changes
+- **`prune --allow-applied` is removed.** Use `prune --allow-remote-db` to allow pruning against a non-local database host. The old flag had a different meaning than `--allow-applied` on all other commands (which means "operate on applied migrations"), causing confusing collision.
+- `prune` no longer defaults to dry-run; it now previews and asks for confirmation. Pass `--dry-run` explicitly for preview-only mode, or `--yes` to skip the prompt.
+
 ## [0.2.0b1] - 2026-05-27
 
 ### Added
