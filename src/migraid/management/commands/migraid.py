@@ -23,6 +23,18 @@ from ...operations.plan import (
     build_renumber_plan,
     validate_graph_improved,
 )
+from ...operations.branch_db import (
+    BranchDBConfig,
+    BranchDBEntry,
+    _fill_db_defaults,
+    create_database,
+    current_git_branch,
+    derive_new_db_config,
+    drop_database,
+    find_git_root,
+    local_git_branch_names,
+    slugify_branch,
+)
 from ...operations.sync_branch import build_sync_branch_plan
 from ...operations.table_sync import (
     TableSyncCollisionError,
@@ -386,6 +398,49 @@ class Command(BaseCommand):
         )
         graph.add_argument("--output", metavar="FILE", help="Write to file instead of stdout")
 
+        # db
+        db_parser = subparsers.add_parser(
+            "db",
+            help="Manage per-branch databases (add / rm / prune / ls)",
+        )
+        db_sub = db_parser.add_subparsers(dest="db_action", metavar="action")
+        db_sub.required = True
+
+        db_add = db_sub.add_parser(
+            "add", help="Register current branch and provision a new database"
+        )
+        db_add.add_argument(
+            "--alias",
+            metavar="ALIAS",
+            help="Database alias to create (default: slugified branch name)",
+        )
+        db_add.add_argument(
+            "--database",
+            default="default",
+            metavar="BASE_ALIAS",
+            help="Existing DB alias to use as config template (default: default)",
+        )
+        db_add.add_argument("--yes", action="store_true", help="Skip confirmation")
+
+        db_rm = db_sub.add_parser("rm", help="Remove a branch's database entry and drop the DB")
+        db_rm.add_argument(
+            "--branch",
+            metavar="BRANCH",
+            help="Branch to remove (default: current branch)",
+        )
+        db_rm.add_argument("--yes", action="store_true", help="Skip confirmation")
+
+        db_prune = db_sub.add_parser(
+            "prune",
+            help="Remove DB entries for git branches that no longer exist",
+        )
+        db_prune.add_argument(
+            "--dry-run", action="store_true", dest="dry_run", help="Preview only, no changes made"
+        )
+        db_prune.add_argument("--yes", action="store_true", help="Skip confirmation")
+
+        db_sub.add_parser("ls", help="List all branch-database mappings")
+
         # sync-branch
         sb = subparsers.add_parser(
             "sync-branch",
@@ -421,6 +476,25 @@ class Command(BaseCommand):
                 "migrations. Requires the migration files to still be present on disk."
             ),
         )
+
+    def execute(self, *args: Any, **options: Any) -> str | None:  # noqa: ANN401
+        git_root = find_git_root()
+        if git_root is not None:
+            cfg = BranchDBConfig.load(git_root)
+            cfg.inject_all()
+            # Auto-resolve --database from the current branch when not explicitly set
+            subcommand = options.get("subcommand", "")
+            if (
+                subcommand != "db"
+                and "database" in options
+                and "--database" not in sys.argv
+            ):
+                branch = current_git_branch()
+                if branch:
+                    entry = cfg.get_entry(branch)
+                    if entry:
+                        options["database"] = entry.alias
+        return super().execute(*args, **options)
 
     def handle(self, *_args: Any, **options: Any) -> None:  # noqa: ANN401
         if "--sync-db" in sys.argv:
@@ -870,3 +944,244 @@ class Command(BaseCommand):
             for f in plan.untracked_files:
                 f.unlink()
             output.success(f"Deleted {len(plan.untracked_files)} untracked migration file(s).")
+
+    # ------------------------------------------------------------------
+    # db (branch-database lifecycle)
+    # ------------------------------------------------------------------
+
+    def _handle_db(self, options: dict[str, Any]) -> None:
+        action: str = options["db_action"]
+        dispatch = {
+            "add": self._handle_db_add,
+            "rm": self._handle_db_rm,
+            "prune": self._handle_db_prune,
+            "ls": self._handle_db_ls,
+        }
+        dispatch[action](options)
+
+    def _handle_db_add(self, options: dict[str, Any]) -> None:
+        yes: bool = options.get("yes", False)
+        base_alias: str = options.get("database", "default")
+        alias_override: str | None = options.get("alias")
+        output = ConsoleOutput(yes=yes)
+
+        git_root = find_git_root()
+        if git_root is None:
+            raise CommandError("db add requires a git repository.")
+
+        branch = current_git_branch()
+        if branch is None:
+            raise CommandError("Could not determine current git branch (detached HEAD?).")
+
+        cfg = BranchDBConfig.load(git_root)
+        if cfg.get_entry(branch) is not None:
+            raise CommandError(
+                f"Branch '{branch}' already has a registered database. "
+                "Use 'migraid db rm' first to replace it."
+            )
+
+        alias = alias_override or slugify_branch(branch)
+
+        # Check alias not already taken by another branch
+        taken_aliases = {e.alias for e in cfg.branch_dbs.values()}
+        if alias in taken_aliases:
+            raise CommandError(
+                f"Alias '{alias}' is already registered for another branch. "
+                "Use --alias to specify a different name."
+            )
+
+        from django.db import connections
+
+        if base_alias not in connections.databases:
+            raise CommandError(
+                f"Base database alias '{base_alias}' is not configured in DATABASES."
+            )
+
+        base_config = dict(connections[base_alias].settings_dict)
+        db_config = derive_new_db_config(base_config, alias)
+        db_name = db_config.get("NAME") or alias
+
+        output.info(f"Branch:    {branch}")
+        output.info(f"New alias: {alias}")
+        output.info(f"Database:  {db_name}")
+
+        if not output.confirm(f"Provision database '{db_name}' for branch '{branch}'?"):
+            output.info("Aborted.")
+            return
+
+        # Inject alias so migrate can use it in this process
+        connections.databases[alias] = _fill_db_defaults(db_config)
+
+        try:
+            create_database(db_config)
+        except RuntimeError as exc:
+            raise CommandError(str(exc)) from exc
+        except Exception as exc:
+            raise CommandError(f"Failed to create database: {exc}") from exc
+
+        from django.core.management import call_command as _call_migrate
+
+        output.info(f"Running migrate --database {alias} ...")
+        try:
+            _call_migrate("migrate", database=alias, verbosity=1)
+        except Exception as exc:
+            raise CommandError(f"migrate failed: {exc}") from exc
+
+        entry = BranchDBEntry(alias=alias, db_config=db_config)
+        cfg.register(branch, entry)
+        cfg.save()
+
+        output.success(f"Registered branch '{branch}' → alias '{alias}' ({db_name}).")
+
+        gitignore = git_root / ".gitignore"
+        if gitignore.exists() and ".migraid" not in gitignore.read_text(encoding="utf-8"):
+            output.warn(
+                ".migraid/config.json may contain DB credentials — "
+                "add '.migraid/' to your .gitignore."
+            )
+
+    def _handle_db_rm(self, options: dict[str, Any]) -> None:
+        yes: bool = options.get("yes", False)
+        branch_opt: str | None = options.get("branch")
+        output = ConsoleOutput(yes=yes)
+
+        git_root = find_git_root()
+        if git_root is None:
+            raise CommandError("db rm requires a git repository.")
+
+        cfg = BranchDBConfig.load(git_root)
+
+        branch = branch_opt or current_git_branch()
+        if branch is None:
+            raise CommandError("Could not determine current branch. Use --branch to specify one.")
+
+        entry = cfg.get_entry(branch)
+        if entry is None:
+            raise CommandError(
+                f"No database registered for branch '{branch}'. "
+                "Use 'migraid db ls' to see registered branches."
+            )
+
+        current = current_git_branch()
+        if branch == current and not yes:
+            raise CommandError(
+                f"'{branch}' is your current branch. "
+                "Use --yes to confirm removing its database while it is checked out."
+            )
+
+        db_name = (entry.db_config or {}).get("NAME") or entry.alias
+        output.info(f"Branch: {branch}")
+        output.info(f"Alias:  {entry.alias}")
+        output.info(f"DB:     {db_name}")
+        if entry.db_config is None:
+            output.warn("This alias was user-configured; only the mapping will be removed.")
+
+        if not output.confirm(f"Remove database entry for branch '{branch}'?"):
+            output.info("Aborted.")
+            return
+
+        if entry.db_config is not None:
+            try:
+                drop_database(entry.db_config)
+            except RuntimeError as exc:
+                raise CommandError(str(exc)) from exc
+            except Exception as exc:
+                raise CommandError(f"Failed to drop database: {exc}") from exc
+
+        cfg.unregister(branch)
+        cfg.save()
+        output.success(f"Removed database entry for branch '{branch}'.")
+
+    def _handle_db_prune(self, options: dict[str, Any]) -> None:
+        dry_run: bool = options.get("dry_run", False)
+        yes: bool = options.get("yes", False)
+        output = ConsoleOutput(yes=yes)
+
+        git_root = find_git_root()
+        if git_root is None:
+            raise CommandError("db prune requires a git repository.")
+
+        cfg = BranchDBConfig.load(git_root)
+        if not cfg.branch_dbs:
+            output.success("db prune: nothing registered.")
+            return
+
+        local_branches = local_git_branch_names()
+        stale = cfg.stale_branches(local_branches)
+
+        if not stale:
+            output.success("db prune: no stale branch databases found.")
+            return
+
+        self.stdout.write(f"Stale branch databases ({len(stale)}):")
+        for branch in stale:
+            entry = cfg.branch_dbs[branch]
+            db_name = (entry.db_config or {}).get("NAME") or entry.alias
+            self.stdout.write(f"  {branch}  →  {entry.alias}  ({db_name})")
+
+        if dry_run:
+            output.info("Dry run — no changes made.")
+            return
+
+        if not output.confirm(f"Drop and remove {len(stale)} stale database(s)?"):
+            output.info("Aborted.")
+            return
+
+        errors: list[str] = []
+        for branch in stale:
+            entry = cfg.branch_dbs[branch]
+            if entry.db_config is not None:
+                try:
+                    drop_database(entry.db_config)
+                except Exception as exc:
+                    errors.append(f"{branch}: {exc}")
+                    continue
+            cfg.unregister(branch)
+
+        cfg.save()
+
+        if errors:
+            for err in errors:
+                output.error(err)
+            raise CommandError(f"{len(errors)} database(s) could not be dropped (see above).")
+
+        output.success(f"Pruned {len(stale)} stale branch database(s).")
+
+    def _handle_db_ls(self, _options: dict[str, Any]) -> None:
+        from rich import box
+        from rich.console import Console
+        from rich.table import Table
+
+        git_root = find_git_root()
+        cfg = BranchDBConfig.load(git_root) if git_root is not None else BranchDBConfig(
+            config_path=Path(".migraid/config.json")
+        )
+
+        if not cfg.branch_dbs:
+            ConsoleOutput().info("No branch databases registered. Use 'migraid db add' to register one.")
+            return
+
+        local_branches = local_git_branch_names()
+        current = current_git_branch()
+
+        console = Console()
+        table = Table(box=box.ROUNDED, show_header=True, header_style="bold")
+        table.add_column("Branch", no_wrap=True)
+        table.add_column("Alias", no_wrap=True)
+        table.add_column("Database", no_wrap=True)
+        table.add_column("Status", no_wrap=True)
+
+        for branch, entry in sorted(cfg.branch_dbs.items()):
+            db_name = (entry.db_config or {}).get("NAME") or entry.alias
+            is_current = branch == current
+            is_stale = branch not in local_branches
+            if is_current:
+                status = "[green]● current[/green]"
+            elif is_stale:
+                status = "[yellow]stale[/yellow]"
+            else:
+                status = "[dim]ok[/dim]"
+            branch_display = f"[bold]{branch}[/bold]" if is_current else branch
+            table.add_row(branch_display, entry.alias, db_name, status)
+
+        console.print(table)
