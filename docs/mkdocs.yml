@@ -23,6 +23,7 @@ nav:
       - doctor: commands/doctor.md
       - rebase: commands/rebase.md
       - fix-conflicts: commands/fix-conflicts.md
+      - linearize: commands/linearize.md
       - renumber: commands/renumber.md
       - prune: commands/prune.md
       - graph: commands/graph.md

@@ -14,7 +14,7 @@ from ..analysis.graph import (
     topological_sort,
 )
 from ..analysis.scanner import MigrationNode
-from .rewriter import rewrite_dependencies
+from .rewriter import linearize_dependencies, rewrite_dependencies
 
 if TYPE_CHECKING:
     from ..output.console import ConsoleOutput
@@ -34,9 +34,13 @@ class MigrationPlan:
     # old (app, name) -> new (app, name) for migrations whose stem changed.
     # Drives django_migrations table sync when --sync-db is used.
     key_renames: dict[tuple[str, str], tuple[str, str]] = field(default_factory=dict)
+    # Files to remove outright (e.g. merge migrations a linearize subsumes).
+    deletions: list[Path] = field(default_factory=list)
+    # (app, name) of deleted migrations — drives django_migrations row DELETEs.
+    deleted_keys: list[tuple[str, str]] = field(default_factory=list)
 
     def is_empty(self) -> bool:
-        return not self.renames
+        return not self.renames and not self.deletions
 
 
 # (op, path, prior_content) entries describing how to reverse a file write.
@@ -60,6 +64,9 @@ class PlanExecutor:
                 rename.old_path.read_text(encoding="utf-8") if rename.old_path.exists() else ""
             )
             self._output.print_diff(old_content, rename.new_content, rename.old_path.name)
+        for path in plan.deletions:
+            old_content = path.read_text(encoding="utf-8") if path.exists() else ""
+            self._output.print_diff(old_content, "", f"{path.name} (deleted)")
 
     def apply(self, plan: MigrationPlan) -> list[UndoEntry]:
         """Write file renames, returning an undo log the caller can replay.
@@ -101,6 +108,13 @@ class PlanExecutor:
                     orig = rename.old_path.read_text(encoding="utf-8")
                     rename.old_path.unlink()
                     undo_log.append(("deleted", rename.old_path, orig))
+
+            # Phase 3: remove files scheduled for deletion (e.g. merge migrations)
+            for del_path in plan.deletions:
+                if del_path.exists():
+                    orig = del_path.read_text(encoding="utf-8")
+                    del_path.unlink()
+                    undo_log.append(("deleted", del_path, orig))
 
         except Exception:
             self.undo(undo_log)
@@ -319,6 +333,112 @@ def build_rebase_plan(
         renames=renames,
         description=f"Rebase {app} migrations",
         key_renames=dict(rename_map),
+    )
+
+
+class LinearizeError(Exception):
+    """Linearize cannot proceed safely; the caller should surface this to the user."""
+
+
+def build_linearize_plan(
+    nodes: dict[tuple[str, str], MigrationNode],
+    app: str,
+    migrations_dir: Path,
+    *,
+    strip_cross_app: bool = False,
+) -> MigrationPlan:
+    """Rewrite an app's history to a gap-free 0001..N single-parent chain.
+
+    Each surviving migration is renumbered in topological order and rewritten so
+    its only in-app dependency is the migration directly before it. Merge
+    migrations are dropped (the chain replaces their join). Cross-app deps are
+    preserved (unless ``strip_cross_app``) and followed through the renames of
+    *this* app; other apps' references are fixed when those apps are processed.
+
+    Raises:
+        LinearizeError: if a merge migration carries operations (deleting it would
+            lose work) or the app uses an in-app ``run_before`` constraint (which
+            the linear chain cannot be trusted to honor).
+    """
+    app_keys = {k for k in nodes if k[0] == app}
+    if not app_keys:
+        return MigrationPlan(description=f"Linearize {app} (no migrations)")
+
+    # Merges are removable no-ops; refuse if one actually carries operations.
+    merge_keys: set[tuple[str, str]] = set()
+    for key in app_keys:
+        node = nodes[key]
+        if node.is_merge_migration:
+            if node.operations:
+                raise LinearizeError(
+                    f"Merge migration {app}.{node.name} has operations; refusing to "
+                    "delete it. Resolve manually before linearizing."
+                )
+            merge_keys.add(key)
+
+    # In-app run_before would impose an order the linear chain can't be trusted to keep.
+    for key in app_keys:
+        for rb in nodes[key].run_before:
+            if rb[0] == app:
+                raise LinearizeError(
+                    f"{app}.{nodes[key].name} uses an in-app run_before constraint; "
+                    "resolve it manually before linearizing."
+                )
+
+    ordered = [n for n in topological_sort(nodes, app) if n.key not in merge_keys]
+
+    rename_map: dict[tuple[str, str], tuple[str, str]] = {}
+    for i, node in enumerate(ordered):
+        new_name = f"{i + 1:04d}_{node.name_suffix}"
+        if node.name != new_name:
+            rename_map[node.key] = (app, new_name)
+
+    def new_key_of(node: MigrationNode) -> tuple[str, str]:
+        return rename_map.get(node.key, node.key)
+
+    renames: list[FileRename] = []
+
+    # Rewrite each surviving migration: collapse in-app deps to its predecessor.
+    # A file with correct numbering AND an already-collapsed dep list is a no-op
+    # (content unchanged, path unchanged) and is skipped — but a redundant double
+    # dependency still produces a content change even when the number is right.
+    for i, node in enumerate(ordered):
+        predecessor = new_key_of(ordered[i - 1]) if i > 0 else None
+        new_content = linearize_dependencies(
+            node.path,
+            app,
+            predecessor,
+            rename_map,
+            strip_cross_app=strip_cross_app,
+        )
+        new_path = migrations_dir / f"{new_key_of(node)[1]}.py"
+        if new_path == node.path and new_content == node.path.read_text(encoding="utf-8"):
+            continue
+        renames.append(FileRename(old_path=node.path, new_path=new_path, new_content=new_content))
+
+    # Other apps' migrations that reference this app's renamed migrations follow along.
+    handled = {n.key for n in ordered} | merge_keys
+    for key, node in nodes.items():
+        if key in handled:
+            continue
+        file_replacements = _compute_file_replacements(node, rename_map)
+        if file_replacements:
+            new_content = rewrite_dependencies(node.path, file_replacements)
+            renames.append(
+                FileRename(old_path=node.path, new_path=node.path, new_content=new_content)
+            )
+
+    deletions = [nodes[k].path for k in sorted(merge_keys)]
+
+    if not renames and not deletions:
+        return MigrationPlan(description=f"Linearize {app} (already linear)")
+
+    return MigrationPlan(
+        renames=renames,
+        description=f"Linearize {app} migrations",
+        key_renames=dict(rename_map),
+        deletions=deletions,
+        deleted_keys=sorted(merge_keys),
     )
 
 

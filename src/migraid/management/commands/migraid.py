@@ -13,10 +13,12 @@ from ...analysis.issues import Severity, run_all_detectors
 from ...analysis.loader import MigrationAnalyzer
 from ...operations.backup import DirtyWorkingTreeError, GitGuard, NotAGitRepoError
 from ...operations.plan import (
+    LinearizeError,
     MigrationPlan,
     PlanExecutor,
     UndoEntry,
     build_fix_conflicts_plan,
+    build_linearize_plan,
     build_rebase_plan,
     build_renumber_plan,
     validate_graph_improved,
@@ -151,7 +153,11 @@ def _execute_plan(
 
         connection = connections[db_alias]
         try:
-            sync_plan = build_table_sync_plan(plan.key_renames, analyzer.applied_migrations())
+            sync_plan = build_table_sync_plan(
+                plan.key_renames,
+                analyzer.applied_migrations(),
+                deleted_keys=set(plan.deleted_keys),
+            )
         except TableSyncCollisionError as exc:
             raise CommandError(str(exc)) from exc
         if sync_plan.is_empty():
@@ -160,8 +166,9 @@ def _execute_plan(
             output.print_table_sync(
                 describe_connection(connection),
                 sync_plan.mappings,
-                render_sql(sync_plan.mappings),
+                render_sql(sync_plan.mappings, sync_plan.deletions),
                 skipped=len(sync_plan.skipped),
+                deleted=len(sync_plan.deletions),
             )
 
     if executor.dry_run:
@@ -237,8 +244,10 @@ def _apply_with_db_sync(
             undo_log = executor.apply(plan)
             # Write the inverse-SQL undo script before the UPDATEs commit, so a
             # crash mid-commit still leaves a recovery path on disk.
-            undo_file = write_undo_file(sync_plan.mappings, label=app)
-            execute_table_sync(connection, sync_plan.mappings)
+            undo_file = write_undo_file(
+                sync_plan.mappings, deletions=sync_plan.deletions, label=app
+            )
+            execute_table_sync(connection, sync_plan.mappings, sync_plan.deletions)
 
             analyzer.reload()
             errors = validate_graph_improved(nodes_before, analyzer.nodes, app)
@@ -264,7 +273,8 @@ def _apply_with_db_sync(
         raise
 
     output.info(f"Wrote DB undo script: {undo_file}")
-    output.success(f"Synced {len(sync_plan.mappings)} django_migrations row(s).")
+    touched = len(sync_plan.mappings) + len(sync_plan.deletions)
+    output.success(f"Synced {touched} django_migrations row(s).")
 
 
 class Command(BaseCommand):
@@ -305,6 +315,23 @@ class Command(BaseCommand):
         fc.add_argument("--force", action="store_true")
         fc.add_argument("--allow-applied", action="store_true")
         _add_sync_args(fc)
+
+        # linearize
+        lin = subparsers.add_parser(
+            "linearize",
+            help="Rewrite history to a gap-free 0001..N chain with one parent each",
+        )
+        lin.add_argument("--app", metavar="LABEL", help="Limit to one app")
+        lin.add_argument(
+            "--strip-cross-app",
+            action="store_true",
+            help="Also drop cross-app dependencies (dangerous — can break migrate order)",
+        )
+        lin.add_argument("--dry-run", action="store_true")
+        lin.add_argument("--yes", action="store_true", help="Skip confirmation")
+        lin.add_argument("--force", action="store_true", help="Skip dirty-tree check")
+        lin.add_argument("--allow-applied", action="store_true")
+        _add_sync_args(lin)
 
         # renumber
         rn = subparsers.add_parser("renumber", help="Fix gap/duplicate numbering for an app")
@@ -461,6 +488,51 @@ class Command(BaseCommand):
             _safety_check_applied(analyzer, app, allow_applied)
             migrations_dir = _get_migrations_dir(app)
             plan = build_fix_conflicts_plan(analyzer.nodes, app, migrations_dir)
+            executor = PlanExecutor(dry_run=dry_run, output=output)
+            _execute_plan(
+                plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias
+            )
+
+    # ------------------------------------------------------------------
+    # linearize
+    # ------------------------------------------------------------------
+
+    def _handle_linearize(self, options: dict[str, Any]) -> None:
+        app_label: str | None = options.get("app")
+        dry_run: bool = options.get("dry_run", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
+        force: bool = options.get("force", False)
+        strip_cross_app: bool = options.get("strip_cross_app", False)
+        sync_db: bool = options.get("sync_db", False)
+        db_alias: str = options.get("database", "default")
+        allow_applied: bool = options.get("allow_applied", False) or sync_db
+
+        from django.db import connections
+
+        connection = connections[db_alias]
+
+        app_dirs = _get_app_dirs(app_label)
+        analyzer = MigrationAnalyzer(app_dirs=app_dirs, connection=connection)
+        output = ConsoleOutput(yes=yes)
+
+        apps_to_do = sorted({k[0] for k in analyzer.nodes})
+        if app_label:
+            apps_to_do = [a for a in apps_to_do if a == app_label]
+        if not apps_to_do:
+            output.success("No migrations found to linearize.")
+            return
+
+        guard = None if dry_run else _build_guard(force)
+
+        for app in apps_to_do:
+            _safety_check_applied(analyzer, app, allow_applied)
+            migrations_dir = _get_migrations_dir(app)
+            try:
+                plan = build_linearize_plan(
+                    analyzer.nodes, app, migrations_dir, strip_cross_app=strip_cross_app
+                )
+            except LinearizeError as exc:
+                raise CommandError(str(exc)) from exc
             executor = PlanExecutor(dry_run=dry_run, output=output)
             _execute_plan(
                 plan, analyzer, app, output, executor, guard, sync_db=sync_db, db_alias=db_alias

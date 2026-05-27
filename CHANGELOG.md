@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `linearize` command: rewrite an app's history into a gap-free `0001..N` chain where each migration depends on exactly one predecessor. Renumbers, collapses redundant in-app dependency lists, resolves forks (subsumes `fix-conflicts`), and deletes merge migrations. Preserves cross-app dependencies by default (`--strip-cross-app` to drop them); aborts on merges that carry operations or in-app `run_before`. Supports `--sync-db`, which now also `DELETE`s `django_migrations` rows for removed applied merges (with re-`INSERT` undo SQL).
+
 ## [0.1.0b1] - 2024-05-26
 
 ### Added

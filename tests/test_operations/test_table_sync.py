@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from migraid.operations.table_sync import (
+    RowDeletion,
     RowMapping,
     TableSyncCollisionError,
     TableSyncError,
@@ -83,6 +84,74 @@ def test_render_sql_forward_and_undo() -> None:
 def test_render_sql_escapes_quotes() -> None:
     mappings = [RowMapping(app="ap'p", old_name="o", new_name="n")]
     assert "ap''p" in render_sql(mappings)[0]
+
+
+# ---------------------------------------------------------------------------
+# Row deletions (linearize drops merge migrations)
+# ---------------------------------------------------------------------------
+
+
+def test_build_includes_applied_deletions() -> None:
+    plan = build_table_sync_plan(
+        {},
+        _applied(("app", "0003_merge")),
+        deleted_keys={("app", "0003_merge")},
+    )
+    assert len(plan.deletions) == 1
+    assert (plan.deletions[0].app, plan.deletions[0].name) == ("app", "0003_merge")
+    assert plan.deletions[0].applied == "2026-01-02"
+
+
+def test_build_skips_unapplied_deletion() -> None:
+    plan = build_table_sync_plan({}, _applied(), deleted_keys={("app", "0003_merge")})
+    assert plan.is_empty()
+    assert plan.skipped == [("app", "0003_merge")]
+
+
+def test_render_sql_with_deletions() -> None:
+    deletions = [RowDeletion(app="app", name="0003_merge", applied="2026-01-02")]
+    fwd = render_sql([], deletions)
+    assert fwd == ["DELETE FROM django_migrations WHERE app='app' AND name='0003_merge';"]
+    undo = render_undo_sql([], deletions)
+    assert undo == [
+        "INSERT INTO django_migrations (app, name, applied) VALUES "
+        "('app', '0003_merge', '2026-01-02');"
+    ]
+
+
+def test_write_undo_file_includes_reinsert(tmp_path) -> None:
+    deletions = [RowDeletion(app="app", name="0003_merge", applied="2026-01-02")]
+    path = write_undo_file([], deletions=deletions, label="app", directory=tmp_path)
+    text = path.read_text()
+    assert "INSERT INTO django_migrations" in text
+    assert "0003_merge" in text
+
+
+@pytest.mark.django_db(transaction=True)
+def test_execute_deletes_applied_row() -> None:
+    from django.db import connection
+    from django.db.migrations.recorder import MigrationRecorder
+
+    recorder = MigrationRecorder(connection)
+    recorder.ensure_schema()
+    recorder.record_applied("delapp", "0003_merge")
+    migration_model = recorder.Migration
+    try:
+        count = execute(connection, [], [RowDeletion("delapp", "0003_merge")])
+        assert count == 1
+        assert not migration_model.objects.filter(app="delapp", name="0003_merge").exists()
+    finally:
+        migration_model.objects.filter(app="delapp").delete()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_execute_delete_missing_row_raises() -> None:
+    from django.db import connection
+    from django.db.migrations.recorder import MigrationRecorder
+
+    MigrationRecorder(connection).ensure_schema()
+    with pytest.raises(TableSyncError):
+        execute(connection, [], [RowDeletion("ghost", "0001_missing")])
 
 
 def test_write_undo_file(tmp_path) -> None:

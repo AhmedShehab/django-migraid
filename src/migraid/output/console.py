@@ -76,6 +76,7 @@ class ConsoleOutput:
         mappings: list[RowMapping],
         sql: list[str],
         skipped: int = 0,
+        deleted: int = 0,
     ) -> None:
         """Show exactly what the django_migrations sync will do before the prompt."""
         self._console.print()
@@ -92,9 +93,15 @@ class ConsoleOutput:
             table.add_row(m.app, m.old_name, f"[cyan]{m.new_name}[/cyan]", applied)
         self._console.print(table)
 
+        if deleted:
+            self._console.print(
+                f"[yellow]{deleted} applied row(s) will be DELETED "
+                "(removed merge migrations).[/yellow]"
+            )
+
         if skipped:
             self._console.print(
-                f"[dim]{skipped} renamed migration(s) had no recorded row — skipped.[/dim]"
+                f"[dim]{skipped} renamed/removed migration(s) had no recorded row — skipped.[/dim]"
             )
 
         self._console.print("[bold]SQL to run:[/bold]")

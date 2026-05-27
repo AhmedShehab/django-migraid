@@ -6,7 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from migraid.operations.rewriter import rewrite_dependencies, rewrite_dependencies_in_source
+from migraid.operations.rewriter import (
+    linearize_dependencies_in_source,
+    rewrite_dependencies,
+    rewrite_dependencies_in_source,
+)
 
 
 @pytest.mark.parametrize(
@@ -130,6 +134,86 @@ class Migration(migrations.Migration):
     assert '"myapp", "0001_squashed"' in result
     # Other entry unchanged
     assert '"myapp", "0002_step"' in result
+
+
+_LIN_PREAMBLE = """\
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+"""
+
+
+def _migration(body: str) -> str:
+    return _LIN_PREAMBLE + body + "    operations = []\n"
+
+
+def test_linearize_collapses_in_app_to_predecessor() -> None:
+    source = _migration(
+        '    dependencies = [\n        ("calls", "0016_a"),\n        ("calls", "0022_b"),\n    ]\n'
+    )
+    result = linearize_dependencies_in_source(source, "calls", ("calls", "0016_a"), {})
+    assert '"calls", "0016_a"' in result
+    assert "0022_b" not in result
+    # Closing bracket stays clean (no orphaned indentation before it).
+    assert "    ]\n" in result
+
+
+def test_linearize_keeps_cross_app() -> None:
+    source = _migration(
+        '    dependencies = [("calls", "0001"), ("calls", "0002"), ("contacts", "0008")]\n'
+    )
+    result = linearize_dependencies_in_source(source, "calls", ("calls", "0001"), {})
+    assert '"contacts", "0008"' in result
+    assert '"calls", "0002"' not in result
+
+
+def test_linearize_strip_cross_app() -> None:
+    source = _migration('    dependencies = [("calls", "0001"), ("contacts", "0008")]\n')
+    result = linearize_dependencies_in_source(
+        source, "calls", ("calls", "0001"), {}, strip_cross_app=True
+    )
+    assert "contacts" not in result
+
+
+def test_linearize_inserts_predecessor_when_no_in_app_dep() -> None:
+    source = _migration('    dependencies = [("contacts", "0008")]\n')
+    result = linearize_dependencies_in_source(source, "calls", ("calls", "0005_prev"), {})
+    assert '"calls", "0005_prev"' in result
+    assert "contacts" in result
+    # Inserted element matches the sibling's quote style (double quotes here).
+    assert "'calls'" not in result
+
+
+def test_linearize_first_migration_drops_in_app() -> None:
+    source = _migration('    dependencies = [("calls", "0003_old")]\n')
+    result = linearize_dependencies_in_source(source, "calls", None, {})
+    assert "0003_old" not in result
+    assert "dependencies = []" in result
+
+
+def test_linearize_rewrites_cross_app_through_rename_map() -> None:
+    source = _migration('    dependencies = [("calls", "0001"), ("contacts", "0008")]\n')
+    result = linearize_dependencies_in_source(
+        source, "calls", ("calls", "0001"), {("contacts", "0008"): ("contacts", "0004")}
+    )
+    assert '"contacts", "0004"' in result
+
+
+def test_linearize_swaps_run_before_and_replaces() -> None:
+    source = _migration(
+        '    run_before = [("other", "0003")]\n'
+        '    replaces = [("calls", "0001"), ("calls", "0002")]\n'
+        "    dependencies = []\n"
+    )
+    rename_map = {
+        ("other", "0003"): ("other", "0005"),
+        ("calls", "0001"): ("calls", "0001_sq"),
+    }
+    result = linearize_dependencies_in_source(source, "calls", None, rename_map)
+    assert '"other", "0005"' in result  # cross-app run_before followed
+    assert '"calls", "0001_sq"' in result  # replaces entry followed
+    assert '"calls", "0002"' in result  # untouched replaces entry survives
 
 
 def test_rewrite_does_not_touch_outside_migration_class() -> None:

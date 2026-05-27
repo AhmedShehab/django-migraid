@@ -96,6 +96,14 @@ Resolve multiple-leaf conflicts by linearizing the fork.
 python manage.py migraid fix-conflicts [--app LABEL] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
 ```
 
+### `linearize`
+
+Rewrite history into a gap-free `0001..N` chain where each migration depends on exactly one predecessor — renumbering, collapsing redundant dependency lists, resolving forks, and deleting merge migrations in one pass. Cross-app dependencies are preserved by default (`--strip-cross-app` to drop them).
+
+```bash
+python manage.py migraid linearize [--app LABEL] [--strip-cross-app] [--dry-run] [--yes] [--force] [--allow-applied] [--sync-db] [--no-input] [--database ALIAS]
+```
+
 ### `renumber`
 
 Fix gap or duplicate numbering in a single app's migrations.

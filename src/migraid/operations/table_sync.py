@@ -40,23 +40,34 @@ class RowMapping:
 
 
 @dataclass
+class RowDeletion:
+    app: str
+    name: str
+    applied: object | None = None  # captured so the undo script can re-INSERT it
+
+
+@dataclass
 class TableSyncPlan:
     mappings: list[RowMapping] = field(default_factory=list)
     # Renamed migrations that had no recorded row (never applied) — nothing to sync.
     skipped: list[tuple[str, str]] = field(default_factory=list)
+    # Applied rows whose migration file is being deleted (e.g. dropped merges).
+    deletions: list[RowDeletion] = field(default_factory=list)
 
     def is_empty(self) -> bool:
-        return not self.mappings
+        return not self.mappings and not self.deletions
 
 
 def build_table_sync_plan(
     key_renames: dict[tuple[str, str], tuple[str, str]],
     applied: dict[tuple[str, str], object],
+    deleted_keys: set[tuple[str, str]] | None = None,
 ) -> TableSyncPlan:
-    """Map renamed migrations onto the django_migrations rows that need updating.
+    """Map renamed/deleted migrations onto the django_migrations rows to touch.
 
     Only renames whose *old* key is recorded as applied produce a row mapping;
-    the rest are skipped (the file rename alone keeps them consistent).
+    the rest are skipped (the file rename alone keeps them consistent). Likewise
+    only deleted migrations that are recorded as applied produce a row deletion.
 
     Raises:
         TableSyncCollisionError: if a target name already names a distinct row
@@ -87,7 +98,20 @@ def build_table_sync_plan(
             )
         )
 
-    return TableSyncPlan(mappings=mappings, skipped=skipped)
+    deletions: list[RowDeletion] = []
+    for del_key in sorted(deleted_keys or set()):
+        if del_key not in applied:
+            skipped.append(del_key)
+            continue
+        deletions.append(
+            RowDeletion(
+                app=del_key[0],
+                name=del_key[1],
+                applied=_applied_timestamp(applied[del_key]),
+            )
+        )
+
+    return TableSyncPlan(mappings=mappings, skipped=skipped, deletions=deletions)
 
 
 def _applied_timestamp(row: object) -> object | None:
@@ -105,19 +129,39 @@ def _update_stmt(app: str, from_name: str, to_name: str) -> str:
     )
 
 
-def render_sql(mappings: list[RowMapping]) -> list[str]:
-    """Forward UPDATE statements (old name -> new name) for preview/audit."""
-    return [_update_stmt(m.app, m.old_name, m.new_name) for m in mappings]
+def _delete_stmt(app: str, name: str) -> str:
+    return f"DELETE FROM django_migrations WHERE app={_quote(app)} AND name={_quote(name)};"
 
 
-def render_undo_sql(mappings: list[RowMapping]) -> list[str]:
-    """Reverse UPDATE statements (new name -> old name) for the undo script."""
-    return [_update_stmt(m.app, m.new_name, m.old_name) for m in mappings]
+def _insert_stmt(app: str, name: str, applied: object | None) -> str:
+    if applied is None:
+        return f"INSERT INTO django_migrations (app, name) VALUES ({_quote(app)}, {_quote(name)});"
+    return (
+        "INSERT INTO django_migrations (app, name, applied) VALUES "
+        f"({_quote(app)}, {_quote(name)}, {_quote(str(applied))});"
+    )
+
+
+def render_sql(mappings: list[RowMapping], deletions: list[RowDeletion] | None = None) -> list[str]:
+    """Forward statements (UPDATE renames, then DELETE removed rows) for preview."""
+    lines = [_update_stmt(m.app, m.old_name, m.new_name) for m in mappings]
+    lines += [_delete_stmt(d.app, d.name) for d in (deletions or [])]
+    return lines
+
+
+def render_undo_sql(
+    mappings: list[RowMapping], deletions: list[RowDeletion] | None = None
+) -> list[str]:
+    """Reverse statements (revert renames, re-INSERT deleted rows) for the undo script."""
+    lines = [_update_stmt(m.app, m.new_name, m.old_name) for m in mappings]
+    lines += [_insert_stmt(d.app, d.name, d.applied) for d in (deletions or [])]
+    return lines
 
 
 def write_undo_file(
     mappings: list[RowMapping],
     *,
+    deletions: list[RowDeletion] | None = None,
     label: str | None = None,
     directory: Path | None = None,
 ) -> Path:
@@ -128,16 +172,20 @@ def write_undo_file(
     lines = [
         "-- django-migraid sync-db undo script",
         "-- Replay against the same database to restore the previous",
-        "-- django_migrations names (timestamps and row ids are unaffected).",
+        "-- django_migrations rows (row ids of re-INSERTed rows may differ).",
         "",
-        *render_undo_sql(mappings),
+        *render_undo_sql(mappings, deletions),
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 
-def execute(connection: BaseDatabaseWrapper, mappings: list[RowMapping]) -> int:
-    """Apply the row renames via the ORM, asserting each updates exactly one row.
+def execute(
+    connection: BaseDatabaseWrapper,
+    mappings: list[RowMapping],
+    deletions: list[RowDeletion] | None = None,
+) -> int:
+    """Apply row renames then deletions via the ORM, asserting one row each.
 
     Must be called inside a ``transaction.atomic`` block on the same connection so
     a mismatch (raising TableSyncError) rolls the whole sync back.
@@ -158,6 +206,16 @@ def execute(connection: BaseDatabaseWrapper, mappings: list[RowMapping]) -> int:
                 f"-> {m.new_name}, but updated {updated}. Rolling back."
             )
         total += updated
+    for d in deletions or []:
+        deleted, _ = (
+            migration_model.objects.using(connection.alias).filter(app=d.app, name=d.name).delete()
+        )
+        if deleted != 1:
+            raise TableSyncError(
+                f"Expected to delete exactly 1 row for {d.app}.{d.name}, "
+                f"but deleted {deleted}. Rolling back."
+            )
+        total += deleted
     return total
 
 
