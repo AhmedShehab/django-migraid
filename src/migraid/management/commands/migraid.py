@@ -23,6 +23,7 @@ from ...operations.plan import (
     build_renumber_plan,
     validate_graph_improved,
 )
+from ...operations.sync_branch import build_sync_branch_plan
 from ...operations.table_sync import (
     TableSyncCollisionError,
     TableSyncError,
@@ -368,6 +369,36 @@ class Command(BaseCommand):
             default="ascii",
         )
         graph.add_argument("--output", metavar="FILE", help="Write to file instead of stdout")
+
+        # sync-branch
+        sb = subparsers.add_parser(
+            "sync-branch",
+            help="Align local DB and migration files to the current git branch state",
+        )
+        sb.add_argument("--app", metavar="LABEL", help="Limit to one app")
+        sb.add_argument("--dry-run", action="store_true")
+        sb.add_argument("--yes", action="store_true", help="Skip confirmation")
+        sb.add_argument(
+            "--no-input",
+            "--noinput",
+            action="store_true",
+            dest="no_input",
+            help="Run non-interactively (CI): skip the confirmation prompt.",
+        )
+        sb.add_argument(
+            "--database",
+            default="default",
+            metavar="ALIAS",
+            help="Database alias to inspect (default: default).",
+        )
+        sb.add_argument(
+            "--schema",
+            action="store_true",
+            help=(
+                "Also run reverse Django migrations (database_backwards) for excess applied "
+                "migrations. Requires the migration files to still be present on disk."
+            ),
+        )
 
     def handle(self, *_args: Any, **options: Any) -> None:  # noqa: ANN401
         subcommand: str = options["subcommand"]
@@ -720,3 +751,92 @@ class Command(BaseCommand):
             ConsoleOutput().success(f"Wrote graph to {output_file}")
         else:
             self.stdout.write(result)
+
+    # ------------------------------------------------------------------
+    # sync-branch
+    # ------------------------------------------------------------------
+
+    def _handle_sync_branch(self, options: dict[str, Any]) -> None:
+        app_label: str | None = options.get("app")
+        dry_run: bool = options.get("dry_run", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
+        db_alias: str = options.get("database", "default")
+        schema: bool = options.get("schema", False)
+
+        from django.db import connections
+
+        connection = connections[db_alias]
+
+        try:
+            guard = GitGuard()
+        except NotAGitRepoError as exc:
+            raise CommandError(
+                f"sync-branch requires a git repository: {exc}"
+            ) from exc
+
+        app_dirs = _get_app_dirs(app_label)
+        analyzer = MigrationAnalyzer(app_dirs=app_dirs, connection=connection)
+        applied = analyzer.applied_migrations()
+
+        plan = build_sync_branch_plan(guard, app_dirs, applied, schema=schema)
+        output = ConsoleOutput(yes=yes)
+
+        if plan.is_empty():
+            output.success("sync-branch: nothing to do.")
+            return
+
+        if plan.schema_targets:
+            output.info(
+                f"--schema: will run migrate backwards for {len(plan.schema_targets)} app(s):"
+            )
+            for app, target in sorted(plan.schema_targets.items()):
+                output.info(f"  {app} → {target or 'zero'}")
+
+        if plan.stale_rows:
+            self.stdout.write(
+                f"Stale django_migrations rows to delete: {len(plan.stale_rows)}"
+            )
+            for app, name in plan.stale_rows:
+                self.stdout.write(f"  {app}.{name}")
+
+        if plan.untracked_files:
+            self.stdout.write(
+                f"Untracked migration files to delete: {len(plan.untracked_files)}"
+            )
+            for f in plan.untracked_files:
+                self.stdout.write(f"  {f}")
+
+        if dry_run:
+            output.info("Dry run — no changes made.")
+            return
+
+        if not output.confirm("Apply these changes?"):
+            output.info("Aborted.")
+            return
+
+        if plan.schema_targets:
+            from django.core.management import call_command as _call_migrate
+
+            for app, target in sorted(plan.schema_targets.items()):
+                target_arg = target or "zero"
+                output.info(f"Migrating {app} to {target_arg}...")
+                try:
+                    _call_migrate("migrate", app, target_arg, database=db_alias, verbosity=1)
+                except Exception as exc:
+                    raise CommandError(
+                        f"Failed to migrate {app} to {target_arg}: {exc}"
+                    ) from exc
+                output.success(f"Migrated {app} to {target_arg}.")
+
+        if plan.stale_rows:
+            from django.db.migrations.recorder import MigrationRecorder
+
+            recorder = MigrationRecorder(connection)
+            for app, name in plan.stale_rows:
+                recorder.record_unapplied(app, name)
+            output.success(f"Deleted {len(plan.stale_rows)} stale django_migrations row(s).")
+
+        if plan.untracked_files:
+            for f in plan.untracked_files:
+                f.unlink()
+            output.success(f"Deleted {len(plan.untracked_files)} untracked migration file(s).")

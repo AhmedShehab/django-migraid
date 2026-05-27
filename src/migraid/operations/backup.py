@@ -87,6 +87,55 @@ class GitGuard:
                 result.add(p.stem)
         return result
 
+    def untracked_migration_files(self, app_dirs: list[tuple[str, Path]]) -> list[Path]:
+        """Return untracked migration .py files (not __init__.py) inside known migrations dirs."""
+        migrations_dirs = {mdir for _, mdir in app_dirs}
+        working_dir = Path(self._repo.working_dir)
+        result: list[Path] = []
+        for path_str in self._repo.untracked_files:
+            p = working_dir / path_str
+            if p.suffix != ".py" or p.name.startswith("__"):
+                continue
+            for mdir in migrations_dirs:
+                try:
+                    p.relative_to(mdir)
+                    result.append(p)
+                    break
+                except ValueError:
+                    continue
+        return sorted(result)
+
+    def tracked_migration_keys(self, app_dirs: list[tuple[str, Path]]) -> set[tuple[str, str]]:
+        """Return (app_label, stem) for all migration .py files tracked by git on HEAD."""
+        working_dir = Path(self._repo.working_dir)
+        result: set[tuple[str, str]] = set()
+        for app_label, migrations_dir in app_dirs:
+            try:
+                rel_dir = migrations_dir.relative_to(working_dir)
+            except ValueError:
+                continue
+            output: str = self._repo.git.ls_files("--", str(rel_dir / "*.py"))
+            for line in output.splitlines():
+                p = Path(line.strip())
+                if p.suffix == ".py" and not p.name.startswith("__"):
+                    result.add((app_label, p.stem))
+        return result
+
+    def highest_tracked_stem(self, migrations_dir: Path) -> str | None:
+        """Return the stem of the highest-numbered migration tracked by git, or None."""
+        working_dir = Path(self._repo.working_dir)
+        try:
+            rel_dir = migrations_dir.relative_to(working_dir)
+        except ValueError:
+            return None
+        output: str = self._repo.git.ls_files("--", str(rel_dir / "*.py"))
+        stems = []
+        for line in output.splitlines():
+            p = Path(line.strip())
+            if p.suffix == ".py" and not p.name.startswith("__"):
+                stems.append(p.stem)
+        return sorted(stems)[-1] if stems else None
+
     def base_leaf_for_app(self, base_ref: str, app_label: str) -> str | None:
         """Return the migration stem at the tip of base_ref for the given app, if any."""
         try:
