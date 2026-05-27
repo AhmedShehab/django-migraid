@@ -57,13 +57,29 @@ class _PostApplyError(Exception):
         self.errors = errors
 
 
+def _get_user_app_labels() -> set[str]:
+    from django.apps import apps
+
+    return {
+        app_config.label
+        for app_config in apps.get_app_configs()
+        if (Path(app_config.path) / "migrations").is_dir()
+        and not app_config.path.startswith(("/usr/", "/venv/", "/.venv/", "/Library/", "/System/"))
+    }
+
+
 def _get_app_dirs(app_label: str | None = None) -> list[tuple[str, Path]]:
     from django.apps import apps
 
+    user_labels = _get_user_app_labels()
     result: list[tuple[str, Path]] = []
     for app_config in apps.get_app_configs():
-        if app_label and app_config.label != app_label:
+        if app_label:
+            if app_config.label != app_label:
+                continue
+        elif app_config.label not in user_labels:
             continue
+
         migrations_dir = Path(app_config.path) / "migrations"
         if migrations_dir.is_dir():
             result.append((app_config.label, migrations_dir))
@@ -1200,18 +1216,26 @@ class Command(BaseCommand):
 
         connection = connections[db_alias]
         output = ConsoleOutput(yes=yes)
+        user_apps = _get_user_app_labels()
         loader = MigrationLoader(connection, ignore_no_migrations=True)
 
         try:
             loader.check_consistent_history(connection)
         except InconsistentMigrationHistory as exc:
             msg = str(exc)
+
+            # Extract app name from error: "Migration <app>.<name> is applied..."
+            import re
+
+            m = re.search(r"Migration (\S+) is applied before its dependency", msg)
+            if m:
+                app_name = m.group(1).split(".")[0]
+                if app_name not in user_apps:
+                    output.warn(f"Inconsistency in 3rd-party/builtin app '{app_name}'; skipping.")
+                    return
+
             output.warn("Detected inconsistency:")
             output.warn(msg)
-
-            # Extract app/migration info from error message
-            # Expected: "Migration <app>.<name> is applied before its dependency <app>.<dep_name>"
-            import re
 
             m = re.search(r"Migration (\S+) is applied before its dependency (\S+)", msg)
             if not m:
