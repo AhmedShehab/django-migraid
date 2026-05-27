@@ -10,11 +10,18 @@ import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+from unittest.mock import MagicMock
+
 from migraid.operations.branch_db import (
     BranchDBConfig,
     BranchDBEntry,
+    _build_postgres_dsn,
+    create_database,
+    current_git_branch,
     derive_new_db_config,
     drop_database,
+    find_git_root,
+    local_git_branch_names,
     slugify_branch,
 )
 
@@ -536,3 +543,244 @@ def test_execute_auto_resolves_database_for_current_branch(tmp_path: Path) -> No
     finally:
         Command._handle_prune = original  # type: ignore[method-assign]
         connections.databases.pop("auto_alias", None)
+
+
+# ---------------------------------------------------------------------------
+# BranchDBConfig.load — corrupt JSON
+# ---------------------------------------------------------------------------
+
+
+def test_config_load_corrupt_json(tmp_path: Path) -> None:
+    config_dir = tmp_path / ".migraid"
+    config_dir.mkdir()
+    (config_dir / "config.json").write_text("not valid json {{{", encoding="utf-8")
+    cfg = BranchDBConfig.load(tmp_path)
+    assert cfg.branch_dbs == {}
+
+
+# ---------------------------------------------------------------------------
+# _build_postgres_dsn
+# ---------------------------------------------------------------------------
+
+
+def test_build_postgres_dsn_all_fields() -> None:
+    config = {"HOST": "db.example.com", "PORT": 5432, "USER": "admin", "PASSWORD": "s3cr3t", "NAME": "mydb"}
+    dsn = _build_postgres_dsn(config)
+    assert "host=db.example.com" in dsn
+    assert "port=5432" in dsn
+    assert "user=admin" in dsn
+    assert "password=s3cr3t" in dsn
+    assert "dbname=mydb" in dsn
+
+
+def test_build_postgres_dsn_empty() -> None:
+    assert _build_postgres_dsn({}) == ""
+
+
+def test_build_postgres_dsn_partial() -> None:
+    dsn = _build_postgres_dsn({"HOST": "localhost", "NAME": "app"})
+    assert "host=localhost" in dsn
+    assert "dbname=app" in dsn
+    assert "user" not in dsn
+
+
+# ---------------------------------------------------------------------------
+# create_database — Postgres path (mocked)
+# ---------------------------------------------------------------------------
+
+
+def _mock_psycopg2() -> MagicMock:
+    mock = MagicMock()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_cursor.__exit__ = MagicMock(return_value=False)
+    mock_conn.cursor.return_value = mock_cursor
+    mock.connect.return_value = mock_conn
+    mock.sql = MagicMock()
+    mock.sql.SQL.return_value.format.return_value = "CREATE DATABASE ..."
+    return mock
+
+
+def test_create_database_postgres_calls_create(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    mock_pg = _mock_psycopg2()
+    mock_pg_sql = MagicMock()
+    with patch.dict(sys.modules, {"psycopg2": mock_pg, "psycopg2.sql": mock_pg_sql}):
+        create_database(
+            {"ENGINE": "django.db.backends.postgresql", "NAME": "mydb", "HOST": "localhost"}
+        )
+    mock_pg.connect.assert_called_once()
+    mock_pg.connect.return_value.cursor.assert_called()
+
+
+def test_create_database_postgres_import_error() -> None:
+    import sys
+
+    with patch.dict(sys.modules, {"psycopg2": None}):
+        with pytest.raises(RuntimeError, match="psycopg2 is required"):
+            create_database({"ENGINE": "django.db.backends.postgresql", "NAME": "mydb"})
+
+
+def test_create_database_postgis_calls_create(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    mock_pg = _mock_psycopg2()
+    mock_pg_sql = MagicMock()
+    with patch.dict(sys.modules, {"psycopg2": mock_pg, "psycopg2.sql": mock_pg_sql}):
+        create_database(
+            {"ENGINE": "django.contrib.gis.db.backends.postgis", "NAME": "gisdb"}
+        )
+    mock_pg.connect.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# create_database — MySQL path (mocked)
+# ---------------------------------------------------------------------------
+
+
+def _mock_mysqldb() -> MagicMock:
+    mock = MagicMock()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_cursor.__exit__ = MagicMock(return_value=False)
+    mock_conn.cursor.return_value = mock_cursor
+    mock.connect.return_value = mock_conn
+    return mock
+
+
+def test_create_database_mysql_calls_create(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    mock_my = _mock_mysqldb()
+    with patch.dict(sys.modules, {"MySQLdb": mock_my}):
+        create_database(
+            {"ENGINE": "django.db.backends.mysql", "NAME": "mydb", "HOST": "localhost", "PORT": 3306}
+        )
+    mock_my.connect.assert_called_once()
+    mock_my.connect.return_value.cursor.assert_called()
+    mock_my.connect.return_value.commit.assert_called_once()
+
+
+def test_create_database_mysql_import_error() -> None:
+    import sys
+
+    with patch.dict(sys.modules, {"MySQLdb": None}):
+        with pytest.raises(RuntimeError, match="mysqlclient is required"):
+            create_database({"ENGINE": "django.db.backends.mysql", "NAME": "mydb"})
+
+
+# ---------------------------------------------------------------------------
+# create_database — unsupported engine
+# ---------------------------------------------------------------------------
+
+
+def test_create_database_unsupported_engine() -> None:
+    with pytest.raises(RuntimeError, match="Unsupported engine for CREATE DATABASE"):
+        create_database({"ENGINE": "django.db.backends.oracle", "NAME": "mydb"})
+
+
+# ---------------------------------------------------------------------------
+# drop_database — Postgres path (mocked)
+# ---------------------------------------------------------------------------
+
+
+def test_drop_database_postgres_calls_drop(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    mock_pg = _mock_psycopg2()
+    mock_pg_sql = MagicMock()
+    with patch.dict(sys.modules, {"psycopg2": mock_pg, "psycopg2.sql": mock_pg_sql}):
+        drop_database(
+            {"ENGINE": "django.db.backends.postgresql", "NAME": "mydb", "HOST": "localhost"}
+        )
+    mock_pg.connect.assert_called_once()
+    # Two execute calls: pg_terminate_backend + DROP DATABASE
+    assert mock_pg.connect.return_value.cursor.return_value.__enter__.return_value.execute.call_count == 2
+
+
+def test_drop_database_postgres_import_error() -> None:
+    import sys
+
+    with patch.dict(sys.modules, {"psycopg2": None}):
+        with pytest.raises(RuntimeError, match="psycopg2 is required"):
+            drop_database({"ENGINE": "django.db.backends.postgresql", "NAME": "mydb"})
+
+
+# ---------------------------------------------------------------------------
+# drop_database — MySQL path (mocked)
+# ---------------------------------------------------------------------------
+
+
+def test_drop_database_mysql_calls_drop(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    mock_my = _mock_mysqldb()
+    with patch.dict(sys.modules, {"MySQLdb": mock_my}):
+        drop_database(
+            {"ENGINE": "django.db.backends.mysql", "NAME": "mydb", "HOST": "localhost", "PORT": 3306}
+        )
+    mock_my.connect.assert_called_once()
+    mock_my.connect.return_value.commit.assert_called_once()
+
+
+def test_drop_database_mysql_import_error() -> None:
+    import sys
+
+    with patch.dict(sys.modules, {"MySQLdb": None}):
+        with pytest.raises(RuntimeError, match="mysqlclient is required"):
+            drop_database({"ENGINE": "django.db.backends.mysql", "NAME": "mydb"})
+
+
+# ---------------------------------------------------------------------------
+# drop_database — unsupported engine
+# ---------------------------------------------------------------------------
+
+
+def test_drop_database_unsupported_engine() -> None:
+    with pytest.raises(RuntimeError, match="Unsupported engine for DROP DATABASE"):
+        drop_database({"ENGINE": "django.db.backends.oracle", "NAME": "mydb"})
+
+
+# ---------------------------------------------------------------------------
+# find_git_root — no git repo
+# ---------------------------------------------------------------------------
+
+
+def test_find_git_root_returns_none_outside_repo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # tmp_path is in /var/... which is outside any git repo
+    no_git = tmp_path / "no_git_here"
+    no_git.mkdir()
+    monkeypatch.chdir(no_git)
+    result = find_git_root()
+    assert result is None
+
+
+# ---------------------------------------------------------------------------
+# local_git_branch_names / current_git_branch — git not available
+# ---------------------------------------------------------------------------
+
+
+def test_local_git_branch_names_returns_empty_on_error() -> None:
+    with patch("migraid.operations.branch_db.local_git_branch_names", side_effect=Exception):
+        pass  # just confirm the function itself handles exceptions
+    # Test the real function by simulating git.Repo raising
+    import sys
+    mock_git = MagicMock()
+    mock_git.Repo.side_effect = Exception("no repo")
+    with patch.dict(sys.modules, {"git": mock_git}):
+        result = local_git_branch_names()
+    assert result == set()
+
+
+def test_current_git_branch_returns_none_on_error() -> None:
+    import sys
+    mock_git = MagicMock()
+    mock_git.Repo.side_effect = Exception("no repo")
+    with patch.dict(sys.modules, {"git": mock_git}):
+        result = current_git_branch()
+    assert result is None
