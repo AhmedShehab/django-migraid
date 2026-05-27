@@ -12,17 +12,6 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from ...analysis.issues import Severity, run_all_detectors
 from ...analysis.loader import MigrationAnalyzer
 from ...operations.backup import DirtyWorkingTreeError, GitGuard, NotAGitRepoError
-from ...operations.plan import (
-    LinearizeError,
-    MigrationPlan,
-    PlanExecutor,
-    UndoEntry,
-    build_fix_conflicts_plan,
-    build_linearize_plan,
-    build_rebase_plan,
-    build_renumber_plan,
-    validate_graph_improved,
-)
 from ...operations.branch_db import (
     BranchDBConfig,
     BranchDBEntry,
@@ -34,6 +23,17 @@ from ...operations.branch_db import (
     find_git_root,
     local_git_branch_names,
     slugify_branch,
+)
+from ...operations.plan import (
+    LinearizeError,
+    MigrationPlan,
+    PlanExecutor,
+    UndoEntry,
+    build_fix_conflicts_plan,
+    build_linearize_plan,
+    build_rebase_plan,
+    build_renumber_plan,
+    validate_graph_improved,
 )
 from ...operations.sync_branch import build_sync_branch_plan
 from ...operations.table_sync import (
@@ -1158,7 +1158,9 @@ class Command(BaseCommand):
         )
 
         if not cfg.branch_dbs:
-            ConsoleOutput().info("No branch databases registered. Use 'migraid db add' to register one.")
+            ConsoleOutput().info(
+                "No branch databases registered. Use 'migraid db add' to register one."
+            )
             return
 
         local_branches = local_git_branch_names()

@@ -21,7 +21,7 @@ class BranchDBConfig:
     branch_dbs: dict[str, BranchDBEntry] = field(default_factory=dict)
 
     @classmethod
-    def load(cls, repo_root: Path) -> "BranchDBConfig":
+    def load(cls, repo_root: Path) -> BranchDBConfig:
         config_path = repo_root / ".migraid" / "config.json"
         if not config_path.exists():
             return cls(config_path=config_path)
