@@ -247,13 +247,13 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../sync-db/" class="md-tabs__link">
+      <a href="../../update-db/" class="md-tabs__link">
         
   
   
     
   
-  Syncing the migrations table
+  Updating the migrations table
 
       </a>
     </li>
@@ -388,14 +388,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../sync-db/" class="md-nav__link">
+      <a href="../../update-db/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Syncing the migrations table
+    Updating the migrations table
   
 
     
@@ -718,6 +718,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sync-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync-branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../graph/" class="md-nav__link">
         
   
@@ -828,15 +856,15 @@
 <h1 id="renumber">renumber</h1>
 <p>Fix gap or duplicate numbering in a single app's migrations.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--sync-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-input<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--update-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--noinput<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
 </code></pre></div>
 <h2 id="description">Description</h2>
 <p>Standardizes the numbering of an app's migrations to be sequential (0001, 0002, 0003, ...) without gaps or duplicates, while maintaining the dependency graph.</p>
 <h2 id="keeping-the-database-in-sync">Keeping the database in sync</h2>
-<p>If any renamed migration has already been applied, add <code>--sync-db</code> to rename the
+<p>If any renamed migration has already been applied, add <code>--update-db</code> to rename the
 matching <code>django_migrations</code> rows in the same atomic, reversible step (implies
-<code>--allow-applied</code>). Use <code>--no-input</code> for CI and <code>--database ALIAS</code> to target a
-non-default connection. See <a href="../../sync-db/">Syncing the <code>django_migrations</code> table</a>.</p>
+<code>--allow-applied</code>). Use <code>--noinput</code> for CI and <code>--database ALIAS</code> to target a
+non-default connection. See <a href="../../update-db/">Syncing the <code>django_migrations</code> table</a>.</p>
 
 
 

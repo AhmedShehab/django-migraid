@@ -9,7 +9,7 @@
          <lastmod>2026-05-27</lastmod>
     </url>
     <url>
-         <loc>https://AhmedShehab.github.io/django-migraid/sync-db/</loc>
+         <loc>https://AhmedShehab.github.io/django-migraid/update-db/</loc>
          <lastmod>2026-05-27</lastmod>
     </url>
     <url>
@@ -38,6 +38,10 @@
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/renumber/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://AhmedShehab.github.io/django-migraid/commands/sync-branch/</loc>
          <lastmod>2026-05-27</lastmod>
     </url>
 </urlset>

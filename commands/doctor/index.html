@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/doctor/">
       
       
-        <link rel="prev" href="../../sync-db/">
+        <link rel="prev" href="../../update-db/">
       
       
         <link rel="next" href="../rebase/">
@@ -247,13 +247,13 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../sync-db/" class="md-tabs__link">
+      <a href="../../update-db/" class="md-tabs__link">
         
   
   
     
   
-  Syncing the migrations table
+  Updating the migrations table
 
       </a>
     </li>
@@ -388,14 +388,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../sync-db/" class="md-nav__link">
+      <a href="../../update-db/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Syncing the migrations table
+    Updating the migrations table
   
 
     
@@ -707,6 +707,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sync-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync-branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../graph/" class="md-nav__link">
         
   
@@ -814,7 +842,7 @@
 <li><strong>Tier 1 (Static)</strong>: Scans files using <code>libcst</code> without importing them. Works even if the code is broken.</li>
 <li><strong>Tier 2 (Live)</strong>: Optional integration with Django's migration loader for database-dependent checks.</li>
 </ul>
-<p>Tier 2 includes <strong>E005</strong>, which flags an applied <code>django_migrations</code> row whose file was renamed on disk without updating the table. The hint explains how to recover; see <a href="../../sync-db/">Syncing the <code>django_migrations</code> table</a>.</p>
+<p>Tier 2 includes <strong>E005</strong>, which flags an applied <code>django_migrations</code> row whose file was renamed on disk without updating the table. The hint explains how to recover; see <a href="../../update-db/">Updating the <code>django_migrations</code> table</a>.</p>
 
 
 

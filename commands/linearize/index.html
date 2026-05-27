@@ -247,13 +247,13 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../sync-db/" class="md-tabs__link">
+      <a href="../../update-db/" class="md-tabs__link">
         
   
   
     
   
-  Syncing the migrations table
+  Updating the migrations table
 
       </a>
     </li>
@@ -388,14 +388,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../sync-db/" class="md-nav__link">
+      <a href="../../update-db/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Syncing the migrations table
+    Updating the migrations table
   
 
     
@@ -740,6 +740,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sync-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync-branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../graph/" class="md-nav__link">
         
   
@@ -873,7 +901,7 @@
 <p>Rewrite an app's history into a clean, gap-free <code>0001..N</code> chain where every
 migration depends on exactly one predecessor.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>linearize<span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strip-cross-app<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--sync-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-input<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>linearize<span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strip-cross-app<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--update-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--noinput<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
 </code></pre></div>
 <h2 id="description">Description</h2>
 <p><code>linearize</code> is the most aggressive cleanup command. For each app (all apps by
@@ -915,13 +943,13 @@ would be unsafe:</p>
 <p>Squashed migrations (those with a <code>replaces</code> list) are treated as ordinary
 nodes: renumbered, with their <code>replaces</code> entries rewritten to match.</p>
 <h2 id="keeping-the-database-in-sync">Keeping the database in sync</h2>
-<p>If any renamed or deleted migration has already been applied, add <code>--sync-db</code> to
+<p>If any renamed or deleted migration has already been applied, add <code>--update-db</code> to
 update the matching <code>django_migrations</code> rows in the same atomic, reversible step
 (implies <code>--allow-applied</code>). Renames become <code>UPDATE</code>s that preserve the original
 <code>applied</code> timestamp; a removed applied merge becomes a <code>DELETE</code> with a matching
-re-<code>INSERT</code> in the undo script. Use <code>--no-input</code> for CI and <code>--database ALIAS</code>
+re-<code>INSERT</code> in the undo script. Use <code>--noinput</code> for CI and <code>--database ALIAS</code>
 to target a non-default connection. See
-<a href="../../sync-db/">Syncing the <code>django_migrations</code> table</a>.</p>
+<a href="../../update-db/">Syncing the <code>django_migrations</code> table</a>.</p>
 
 
 

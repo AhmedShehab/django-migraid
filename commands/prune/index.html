@@ -16,7 +16,7 @@
         <link rel="prev" href="../renumber/">
       
       
-        <link rel="next" href="../graph/">
+        <link rel="next" href="../sync-branch/">
       
       
         
@@ -247,13 +247,13 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../sync-db/" class="md-tabs__link">
+      <a href="../../update-db/" class="md-tabs__link">
         
   
   
     
   
-  Syncing the migrations table
+  Updating the migrations table
 
       </a>
     </li>
@@ -388,14 +388,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../sync-db/" class="md-nav__link">
+      <a href="../../update-db/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Syncing the migrations table
+    Updating the migrations table
   
 
     
@@ -691,10 +691,71 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prune-vs-sync-branch-update-db" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune vs sync-branch --update-db
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync-branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -783,6 +844,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prune-vs-sync-branch-update-db" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune vs sync-branch --update-db
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -806,10 +900,64 @@
 <h1 id="prune">prune</h1>
 <p>Remove orphaned <code>django_migrations</code> rows for migrations no longer on disk.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>prune<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>prune<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--noinput<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-remote-db<span class="o">]</span>
 </code></pre></div>
 <h2 id="description">Description</h2>
-<p>Cleaning up the <code>django_migrations</code> table by removing entries for migrations that have been deleted from the filesystem (e.g., after a squash or manual cleanup).</p>
+<p>Cleans up the <code>django_migrations</code> table by removing rows for migrations that have been deleted from the filesystem (e.g., after a squash or manual cleanup). This is the counterpart to <code>sync-branch --update-db</code>, which cleans up rows for branch-excess applied migrations after a checkout.</p>
+<h2 id="flags">Flags</h2>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--dry-run</code></td>
+<td>off</td>
+<td>Preview stale rows without deleting them.</td>
+</tr>
+<tr>
+<td><code>--yes</code> / <code>--noinput</code></td>
+<td>off</td>
+<td>Skip the confirmation prompt (CI-friendly).</td>
+</tr>
+<tr>
+<td><code>--database ALIAS</code></td>
+<td><code>default</code></td>
+<td>Database alias to inspect and prune.</td>
+</tr>
+<tr>
+<td><code>--allow-remote-db</code></td>
+<td>off</td>
+<td>Allow pruning against a non-local database host.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="safety">Safety</h2>
+<p>By default <code>prune</code> refuses to run against a non-local database host (anything other than <code>localhost</code>, <code>127.0.0.1</code>, or SQLite). Pass <code>--allow-remote-db</code> to override.</p>
+<p>Running <code>prune</code> without <code>--dry-run</code> shows the stale rows and asks for confirmation before deleting anything.</p>
+<h2 id="prune-vs-sync-branch-update-db"><code>prune</code> vs <code>sync-branch --update-db</code></h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Migration files deleted from the repo (squash cleanup, manual delete)</td>
+<td><code>prune</code></td>
+</tr>
+<tr>
+<td>Checked out a different branch; DB has applied rows for branch-local migrations no longer on disk</td>
+<td><code>sync-branch --update-db</code></td>
+</tr>
+</tbody>
+</table>
 
 
 

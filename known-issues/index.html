@@ -16,7 +16,7 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../sync-db/">
+        <link rel="next" href="../update-db/">
       
       
         
@@ -249,13 +249,13 @@
   
   
     <li class="md-tabs__item">
-      <a href="../sync-db/" class="md-tabs__link">
+      <a href="../update-db/" class="md-tabs__link">
         
   
   
     
   
-  Syncing the migrations table
+  Updating the migrations table
 
       </a>
     </li>
@@ -567,14 +567,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../sync-db/" class="md-nav__link">
+      <a href="../update-db/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Syncing the migrations table
+    Updating the migrations table
   
 
     
@@ -792,6 +792,34 @@
     
   
     prune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/sync-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync-branch
   
 
     
@@ -1048,13 +1076,13 @@
 <p><strong>Symptoms:</strong> <code>migrate</code> reports a migration as unapplied even though its schema changes are already in the database, and an old migration name appears "missing." <code>doctor</code> shows a <code>django_migrations</code> row whose name has no file on disk while a same-suffix file exists.</p>
 <p><strong>Root cause:</strong> An applied migration was renamed on disk (e.g. <code>rebase</code>/<code>renumber</code>/<code>fix-conflicts</code> with <code>--allow-applied</code>, or a manual rename) without updating the <code>django_migrations</code> table, so the recorded name no longer matches the file.</p>
 <p><strong>Manual fix:</strong> <code>UPDATE django_migrations SET name='&lt;new&gt;' WHERE app='&lt;app&gt;' AND name='&lt;old&gt;';</code> (the exact statement is in the <code>doctor</code> hint), or revert the file rename in git.</p>
-<p><strong>Auto-fix:</strong> Re-run the rename command with <a href="../sync-db/"><code>--sync-db</code></a>, which renames the file and the row together. Going forward, always pass <code>--sync-db</code> instead of <code>--allow-applied</code> when renaming applied migrations.</p>
+<p><strong>Auto-fix:</strong> Re-run the rename command with <a href="../update-db/"><code>--update-db</code></a>, which renames the file and the row together. Going forward, always pass <code>--update-db</code> instead of <code>--allow-applied</code> when renaming applied migrations.</p>
 <hr />
 <h2 id="w001-stale-django_migrations-rows">W001 — Stale <code>django_migrations</code> Rows</h2>
 <p><strong>Symptoms:</strong> <code>django_migrations</code> table contains rows for migrations that no longer exist on disk. Subsequent migrations may fail or produce confusing output.</p>
 <p><strong>Root cause:</strong> Migration files were deleted or renamed without updating the database, or a branch was switched without rolling back first.</p>
 <p><strong>Manual fix:</strong> Manually delete the orphaned rows from <code>django_migrations</code>.</p>
-<p><strong>Auto-fix:</strong> <code>python manage.py migraid prune</code> (dry-run by default, requires <code>--yes</code> to execute).</p>
+<p><strong>Auto-fix:</strong> <code>python manage.py migraid prune --yes</code> (previews and confirms before deleting; add <code>--dry-run</code> to preview without any prompt).</p>
 <hr />
 <h2 id="w002-runpython-runsql-without-reverse-code">W002 — <code>RunPython</code> / <code>RunSQL</code> Without Reverse Code</h2>
 <p><strong>Symptoms:</strong> <code>migrate --plan</code> shows <code>IRREVERSIBLE</code>. Rolling back fails with an error.</p>
