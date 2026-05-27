@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/doctor/">
+        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/linearize/">
       
       
-        <link rel="prev" href="../../sync-db/">
+        <link rel="prev" href="../fix-conflicts/">
       
       
-        <link rel="next" href="../rebase/">
+        <link rel="next" href="../renumber/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>doctor - django-migraid</title>
+        <title>linearize - django-migraid</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#doctor" class="md-skip">
+        <a href="#linearize" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              doctor
+              linearize
             
           </span>
         </div>
@@ -270,7 +270,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../doctor/" class="md-tabs__link">
           
   
   
@@ -467,37 +467,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    doctor
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../doctor/" class="md-nav__link">
         
   
   
@@ -513,48 +486,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -620,10 +551,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../linearize/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    linearize
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -639,6 +597,81 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-app-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-app dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-makes-it-abort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What makes it abort
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keeping-the-database-in-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping the database in sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -783,6 +816,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#cross-app-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-app dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-makes-it-abort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What makes it abort
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keeping-the-database-in-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping the database in sync
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -803,18 +869,59 @@
   
 
 
-<h1 id="doctor">doctor</h1>
-<p>Read-only diagnostic. Reports every detected issue with severity.</p>
+<h1 id="linearize">linearize</h1>
+<p>Rewrite an app's history into a clean, gap-free <code>0001..N</code> chain where every
+migration depends on exactly one predecessor.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>doctor<span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>linearize<span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strip-cross-app<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--sync-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-input<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
 </code></pre></div>
 <h2 id="description">Description</h2>
-<p>The <code>doctor</code> command scans your project's migrations for common issues, circular dependencies, and inconsistencies. It provides a detailed report with severity levels (ERROR, WARNING, INFO).</p>
+<p><code>linearize</code> is the most aggressive cleanup command. For each app (all apps by
+default, or just <code>--app LABEL</code>) it:</p>
 <ul>
-<li><strong>Tier 1 (Static)</strong>: Scans files using <code>libcst</code> without importing them. Works even if the code is broken.</li>
-<li><strong>Tier 2 (Live)</strong>: Optional integration with Django's migration loader for database-dependent checks.</li>
+<li><strong>Renumbers</strong> every migration to a sequential <code>0001, 0002, 0003, …</code> with no
+  gaps and no duplicates.</li>
+<li><strong>Collapses dependencies</strong> so each migration's only in-app dependency is the
+  migration directly before it — removing redundant "double dependency" lists
+  like:</li>
 </ul>
-<p>Tier 2 includes <strong>E005</strong>, which flags an applied <code>django_migrations</code> row whose file was renamed on disk without updating the table. The hint explains how to recover; see <a href="../../sync-db/">Syncing the <code>django_migrations</code> table</a>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="p">(</span><span class="s2">&quot;general_calls&quot;</span><span class="p">,</span> <span class="s2">&quot;0016_rename_telnyx_call_id&quot;</span><span class="p">),</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="p">(</span><span class="s2">&quot;general_calls&quot;</span><span class="p">,</span> <span class="s2">&quot;0022_generalcall_call_engine_duration_seconds_and_more&quot;</span><span class="p">),</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">]</span>
+</code></pre></div>
+<p>becomes a single parent.
+- <strong>Resolves forks</strong> itself (it subsumes <code>fix-conflicts</code>): diverged branches are
+  ordered into one line.
+- <strong>Deletes merge migrations</strong> — once history is linear, the no-op <code>…_merge_…</code>
+  joins are removed.</p>
+<p>It does <strong>not</strong> squash operations: a project with 15 migrations still has 15
+migrations afterwards (minus any merges). Only filenames and dependency lists
+change.</p>
+<h2 id="cross-app-dependencies">Cross-app dependencies</h2>
+<p>A dependency that points at <em>another</em> app (for example a FK target) is preserved
+by default — stripping it would break Django's apply order. Pass
+<code>--strip-cross-app</code> only if you are certain those edges are unnecessary; it can
+make <code>migrate</code> fail or build schema in the wrong order.</p>
+<h2 id="what-makes-it-abort">What makes it abort</h2>
+<p><code>linearize</code> refuses to run (with a clear message) when an automatic collapse
+would be unsafe:</p>
+<ul>
+<li>a <code>…_merge_…</code> migration that actually carries operations (deleting it would
+  lose work), or</li>
+<li>an app that uses an <strong>in-app</strong> <code>run_before</code> constraint (the linear chain can't
+  be trusted to honor it).</li>
+</ul>
+<p>Squashed migrations (those with a <code>replaces</code> list) are treated as ordinary
+nodes: renumbered, with their <code>replaces</code> entries rewritten to match.</p>
+<h2 id="keeping-the-database-in-sync">Keeping the database in sync</h2>
+<p>If any renamed or deleted migration has already been applied, add <code>--sync-db</code> to
+update the matching <code>django_migrations</code> rows in the same atomic, reversible step
+(implies <code>--allow-applied</code>). Renames become <code>UPDATE</code>s that preserve the original
+<code>applied</code> timestamp; a removed applied merge becomes a <code>DELETE</code> with a matching
+re-<code>INSERT</code> in the undo script. Use <code>--no-input</code> for CI and <code>--database ALIAS</code>
+to target a non-default connection. See
+<a href="../../sync-db/">Syncing the <code>django_migrations</code> table</a>.</p>
 
 
 
