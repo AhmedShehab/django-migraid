@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-migraid"
-version = "0.2.0b3"
+version = "0.2.0b4"
 description = "Detect, diagnose, and auto-fix Django migration problems, circular dependencies, and merge conflicts."
 readme = "README.md"
 license = "Apache-2.0"
