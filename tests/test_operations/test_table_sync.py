@@ -72,13 +72,11 @@ def test_render_sql_forward_and_undo() -> None:
     mappings = [RowMapping(app="app", old_name="0005_foo", new_name="0008_foo")]
     fwd = render_sql(mappings)[0]
     assert fwd == (
-        "UPDATE django_migrations SET name='0008_foo' "
-        "WHERE app='app' AND name='0005_foo';"
+        "UPDATE django_migrations SET name='0008_foo' WHERE app='app' AND name='0005_foo';"
     )
     undo = render_undo_sql(mappings)[0]
     assert undo == (
-        "UPDATE django_migrations SET name='0005_foo' "
-        "WHERE app='app' AND name='0008_foo';"
+        "UPDATE django_migrations SET name='0005_foo' WHERE app='app' AND name='0008_foo';"
     )
 
 

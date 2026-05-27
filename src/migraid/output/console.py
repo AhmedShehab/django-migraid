@@ -80,9 +80,7 @@ class ConsoleOutput:
         """Show exactly what the django_migrations sync will do before the prompt."""
         self._console.print()
         self._console.print(f"[bold]Target DB:[/bold] {target}")
-        self._console.print(
-            f"[bold]django_migrations changes[/bold] ({len(mappings)} row(s)):"
-        )
+        self._console.print(f"[bold]django_migrations changes[/bold] ({len(mappings)} row(s)):")
 
         table = Table(box=box.ROUNDED, show_header=True, header_style="bold")
         table.add_column("App", no_wrap=True)
