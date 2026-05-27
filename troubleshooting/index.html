@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/rebase/">
+        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/troubleshooting/">
       
       
-        <link rel="prev" href="../doctor/">
+        <link rel="prev" href="..">
       
       
-        <link rel="next" href="../fix-conflicts/">
+        <link rel="next" href="../known-issues/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>rebase - django-migraid</title>
+        <title>Troubleshooting - django-migraid</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#rebase" class="md-skip">
+        <a href="#common-django-migration-errors" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="django-migraid" class="md-header__button md-logo" aria-label="django-migraid" data-md-component="logo">
+    <a href=".." title="django-migraid" class="md-header__button md-logo" aria-label="django-migraid" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              rebase
+              Troubleshooting
             
           </span>
         </div>
@@ -209,7 +209,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -226,9 +226,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../../troubleshooting/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -247,7 +249,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../known-issues/" class="md-tabs__link">
+      <a href="../known-issues/" class="md-tabs__link">
         
   
   
@@ -266,7 +268,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../update-db/" class="md-tabs__link">
+      <a href="../update-db/" class="md-tabs__link">
         
   
   
@@ -283,13 +285,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../doctor/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../commands/doctor/" class="md-tabs__link">
           
   
   
@@ -323,7 +323,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="django-migraid" class="md-nav__button md-logo" aria-label="django-migraid" data-md-component="logo">
+    <a href=".." title="django-migraid" class="md-nav__button md-logo" aria-label="django-migraid" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -353,7 +353,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -377,10 +377,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -396,6 +423,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#circulardependencyerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CircularDependencyError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inconsistentmigrationhistory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InconsistentMigrationHistory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-leaf-nodes-merge-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Leaf Nodes (Merge Conflicts)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nodenotfounderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NodeNotFoundError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gaps-in-migration-numbering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gaps in Migration Numbering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stale-entries-in-django_migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale entries in django_migrations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -407,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../known-issues/" class="md-nav__link">
+      <a href="../known-issues/" class="md-nav__link">
         
   
   
@@ -434,7 +547,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../update-db/" class="md-nav__link">
+      <a href="../update-db/" class="md-nav__link">
         
   
   
@@ -458,29 +571,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -498,7 +606,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -516,7 +624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../doctor/" class="md-nav__link">
+      <a href="../commands/doctor/" class="md-nav__link">
         
   
   
@@ -541,37 +649,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    rebase
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../commands/rebase/" class="md-nav__link">
         
   
   
@@ -587,59 +668,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#keeping-the-database-in-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keeping the database in sync
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -652,7 +680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../fix-conflicts/" class="md-nav__link">
+      <a href="../commands/fix-conflicts/" class="md-nav__link">
         
   
   
@@ -680,7 +708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../linearize/" class="md-nav__link">
+      <a href="../commands/linearize/" class="md-nav__link">
         
   
   
@@ -708,7 +736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../renumber/" class="md-nav__link">
+      <a href="../commands/renumber/" class="md-nav__link">
         
   
   
@@ -736,7 +764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../prune/" class="md-nav__link">
+      <a href="../commands/prune/" class="md-nav__link">
         
   
   
@@ -764,7 +792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sync-branch/" class="md-nav__link">
+      <a href="../commands/sync-branch/" class="md-nav__link">
         
   
   
@@ -792,7 +820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../graph/" class="md-nav__link">
+      <a href="../commands/graph/" class="md-nav__link">
         
   
   
@@ -847,10 +875,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#circulardependencyerror" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        CircularDependencyError
       
     </span>
   </a>
@@ -858,10 +886,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#inconsistentmigrationhistory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        InconsistentMigrationHistory
       
     </span>
   </a>
@@ -869,10 +897,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keeping-the-database-in-sync" class="md-nav__link">
+  <a href="#multiple-leaf-nodes-merge-conflicts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keeping the database in sync
+        Multiple Leaf Nodes (Merge Conflicts)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nodenotfounderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NodeNotFoundError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gaps-in-migration-numbering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gaps in Migration Numbering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stale-entries-in-django_migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale entries in django_migrations
       
     </span>
   </a>
@@ -899,18 +960,48 @@
   
 
 
-<h1 id="rebase">rebase</h1>
-<p>Renumber local branch migrations to follow the latest from a target branch.</p>
-<h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>rebase<span class="w"> </span><span class="o">[</span>--base<span class="w"> </span>BRANCH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--update-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--noinput<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
-</code></pre></div>
-<h2 id="description">Description</h2>
-<p>The <code>rebase</code> command helps linearize your branch's migrations when parallel development causes conflicts or gaps in numbering. It identifies migrations unique to your branch and renumbers them to follow the latest migration on the target base branch (defaulting to <code>main</code>).</p>
-<h2 id="keeping-the-database-in-sync">Keeping the database in sync</h2>
-<p>If any renamed migration has already been applied, add <code>--update-db</code> to rename the
-matching <code>django_migrations</code> rows in the same atomic, reversible step (implies
-<code>--allow-applied</code>). Use <code>--noinput</code> for CI and <code>--database ALIAS</code> to target a
-non-default connection. See <a href="../../update-db/">Syncing the <code>django_migrations</code> table</a>.</p>
+<h1 id="common-django-migration-errors">Common Django Migration Errors</h1>
+<p>This guide helps you diagnose and fix common Django migration errors using <code>django-migraid</code>.</p>
+<h2 id="circulardependencyerror">CircularDependencyError</h2>
+<p><strong>The Problem:</strong> You have two or more migrations that depend on each other in a cycle (e.g., App A Migration 0002 depends on App B Migration 0001, and App B Migration 0002 depends on App A Migration 0002).</p>
+<p><strong>Search Terms:</strong> <code>django CircularDependencyError</code>, <code>migration depends on itself</code>, <code>break circular migration dependency</code>.</p>
+<p><strong>How to fix:</strong>
+1. Run <code>python manage.py migraid doctor</code> to identify the specific migrations involved in the cycle (Error <strong>E002</strong>).
+2. Use <code>python manage.py migraid graph</code> to visualize the cycle.
+3. Manually edit the <code>dependencies</code> list in one of the migrations to break the cycle.</p>
+<h2 id="inconsistentmigrationhistory">InconsistentMigrationHistory</h2>
+<p><strong>The Problem:</strong> Django detects that a migration is applied, but one of its dependencies is NOT applied. This often happens after renumbering migrations or rebasing without updating the database.</p>
+<p><strong>Search Terms:</strong> <code>django InconsistentMigrationHistory</code>, <code>migration applied before its dependency</code>, <code>django_migrations table out of sync</code>.</p>
+<p><strong>How to fix:</strong>
+Use the <code>--update-db</code> flag with <code>renumber</code> or <code>rebase</code> to keep your database in sync with your files (Error <strong>E005</strong>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--update-db
+</code></pre></div></p>
+<h2 id="multiple-leaf-nodes-merge-conflicts">Multiple Leaf Nodes (Merge Conflicts)</h2>
+<p><strong>The Problem:</strong> Two developers created a new migration (e.g., <code>0005_...</code>) on different branches. When merged, the app has two migrations that both claim to be the "latest".</p>
+<p><strong>Search Terms:</strong> <code>django migration merge conflict</code>, <code>multiple leaf nodes in migration graph</code>, <code>makemigrations --merge</code>.</p>
+<p><strong>How to fix:</strong>
+Instead of manually creating a merge migration, use <code>fix-conflicts</code> (Error <strong>E001</strong>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>fix-conflicts
+</code></pre></div></p>
+<h2 id="nodenotfounderror">NodeNotFoundError</h2>
+<p><strong>The Problem:</strong> A migration depends on another migration that no longer exists on disk. This usually happens after a bad rebase or if a migration file was accidentally deleted.</p>
+<p><strong>Search Terms:</strong> <code>django NodeNotFoundError</code>, <code>migration depends on missing node</code>.</p>
+<p><strong>How to fix:</strong>
+Run <code>python manage.py migraid doctor</code> to find which migration has the broken dependency (Error <strong>E004</strong>).</p>
+<h2 id="gaps-in-migration-numbering">Gaps in Migration Numbering</h2>
+<p><strong>The Problem:</strong> Your migrations are numbered <code>0001</code>, <code>0002</code>, <code>0005</code>. While Django handles this, it can lead to confusion and is often a sign of a messy rebase.</p>
+<p><strong>Search Terms:</strong> <code>django migration gap numbering</code>, <code>renumber django migrations</code>.</p>
+<p><strong>How to fix:</strong>
+Use <code>renumber</code> to close the gaps (Error <strong>E003</strong>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;
+</code></pre></div></p>
+<h2 id="stale-entries-in-django_migrations">Stale entries in <code>django_migrations</code></h2>
+<p><strong>The Problem:</strong> Your <code>django_migrations</code> table contains rows for migrations that are no longer in your codebase.</p>
+<p><strong>Search Terms:</strong> <code>remove deleted migrations from django_migrations</code>, <code>ghost migrations django</code>.</p>
+<p><strong>How to fix:</strong>
+Use <code>prune</code> to safely remove these entries (Warning <strong>W001</strong>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>prune
+</code></pre></div></p>
 
 
 
@@ -960,10 +1051,10 @@ non-default connection. See <a href="../../update-db/">Syncing the <code>django_
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.instant", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
