@@ -17,6 +17,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Troubleshooting: troubleshooting.md
   - Known Issues: known-issues.md
   - Updating the migrations table: update-db.md
   - Commands:

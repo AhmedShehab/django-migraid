@@ -5,11 +5,23 @@ build-backend = "hatchling.build"
 [project]
 name = "django-migraid"
 version = "0.2.0b3"
-description = "Detect, diagnose, and auto-fix Django migration problems in Git workflows"
+description = "Detect, diagnose, and auto-fix Django migration problems, circular dependencies, and merge conflicts."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
-keywords = ["django", "migrations", "git", "rebase", "devtools"]
+keywords = [
+    "django",
+    "migrations",
+    "git",
+    "rebase",
+    "devtools",
+    "circular-dependency",
+    "merge-conflict",
+    "InconsistentMigrationHistory",
+    "renumber",
+    "django-migrations",
+    "database-sync",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: Django",

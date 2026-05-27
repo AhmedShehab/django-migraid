@@ -58,20 +58,46 @@ python manage.py migraid graph myapp --format mermaid
 
 ## Problems This Solves
 
-| Issue | Code | Command |
-|-------|------|---------|
-| Conflicting leaf migrations (parallel development) | E001 | `fix-conflicts` |
-| Circular migration dependencies | E002 | — (reports) |
-| Out-of-order / gap numbering after rebase | E003 | `renumber` |
-| Dependency on a deleted migration | E004 | — (reports) |
-| Renamed applied migration (table desync) | E005 | `rebase`/`renumber`/`fix-conflicts --update-db` |
-| Stale `django_migrations` rows | W001 | `prune` |
-| `RunPython` without `reverse_code` | W002 | — (reports) |
-| Squashed migration with old files still present | W003 | — (reports) |
-| Merge migrations in a rebase-workflow repo | W004 | `rebase` |
-| Non-deterministic dependency ordering | W005 | — (reports) |
-| Cross-app dependency risks | I001 | — (reports) |
-| `--fake` / `--fake-initial` footgun patterns | I002 | — (reports) |
+| Issue | Code | Django Error / Search Term | Command |
+|-------|------|-----------------------------|---------|
+| Conflicting leaf migrations | E001 | `multiple leaf nodes`, `migration merge conflict` | `fix-conflicts` |
+| Circular migration dependencies | E002 | `CircularDependencyError`, `circular dependency` | — (reports) |
+| Out-of-order numbering | E003 | `gap in numbering`, `renumber migrations` | `renumber` |
+| Dependency on a deleted migration | E004 | `NodeNotFoundError`, `missing dependency` | — (reports) |
+| Renamed applied migration | E005 | `InconsistentMigrationHistory`, `table desync` | `rebase`/`renumber`/`fix-conflicts --update-db` |
+| Stale `django_migrations` rows | W001 | `ghost migrations`, `remove from django_migrations` | `prune` |
+| `RunPython` without `reverse_code` | W002 | `unreversible data migration` | — (reports) |
+| Squashed migration cleanup | W003 | `remove old migrations after squash` | — (reports) |
+| Merge migrations in rebase flow | W004 | `delete django merge migrations` | `rebase` |
+| Non-deterministic dependencies | W005 | `random migration order` | — (reports) |
+
+## Common Scenarios & How-To
+
+### How to fix a Django migration merge conflict?
+When two developers create `0005_*.py` on different branches, run:
+```bash
+python manage.py migraid fix-conflicts
+```
+This linearizes the migrations into `0005_...` and `0006_...` automatically.
+
+### How to rebase migrations onto another branch?
+To renumber your local migrations to follow the latest from `main`:
+```bash
+python manage.py migraid rebase --base main
+```
+
+### How to fix `InconsistentMigrationHistory`?
+If you've renamed or renumbered migrations that are already applied, use the `--update-db` flag:
+```bash
+python manage.py migraid renumber myapp --update-db
+```
+This synchronizes the `django_migrations` table with your new file names.
+
+### How to find circular dependencies?
+Run the diagnostic tool to identify cycles in your migration graph:
+```bash
+python manage.py migraid doctor
+```
 
 ## Command Reference
 
