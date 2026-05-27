@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0b3] - 2026-05-27
+
+### Fixed
+- Broken `../sync-db.md` link in `doctor.md` (renamed to `update-db.md` in 0.2.0b2).
+
 ## [0.2.0b2] - 2026-05-27
 
 ### Added
