@@ -364,28 +364,25 @@ class Command(BaseCommand):
         rn.add_argument("--allow-applied", action="store_true")
         _add_db_sync_args(rn)
 
-        # prune
-        prune = subparsers.add_parser("prune", help="Remove stale django_migrations rows")
-        prune.add_argument("--dry-run", action="store_true", help="Preview only, no rows deleted")
-        prune.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
-        prune.add_argument(
+        # repair
+        repair = subparsers.add_parser(
+            "repair",
+            help="Fix 'InconsistentMigrationHistory' (out-of-order applied migrations) in the DB",
+        )
+        repair.add_argument("--dry-run", action="store_true", help="Preview only, no changes")
+        repair.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
+        repair.add_argument(
             "--noinput",
             "--no-input",
             action="store_true",
             dest="no_input",
-            help="Alias for --yes (non-interactive / CI).",
+            help="Alias for --yes.",
         )
-        prune.add_argument(
+        repair.add_argument(
             "--database",
             default="default",
             metavar="ALIAS",
-            help="Database alias to prune (default: default).",
-        )
-        prune.add_argument(
-            "--allow-remote-db",
-            action="store_true",
-            dest="allow_remote_db",
-            help="Allow pruning against a non-local database host.",
+            help="Database alias to repair (default: default).",
         )
 
         # graph
@@ -1185,3 +1182,59 @@ class Command(BaseCommand):
             table.add_row(branch_display, entry.alias, db_name, status)
 
         console.print(table)
+
+    # ------------------------------------------------------------------
+    # repair
+    # ------------------------------------------------------------------
+
+    def _handle_repair(self, options: dict[str, Any]) -> None:
+        dry_run: bool = options.get("dry_run", False)
+        yes: bool = options.get("yes", False) or options.get("no_input", False)
+        db_alias: str = options.get("database", "default")
+
+        from django.db import connections
+        from django.db.migrations.exceptions import InconsistentMigrationHistory
+        from django.db.migrations.loader import MigrationLoader
+
+        from ...operations.table_sync import record_unapplied
+
+        connection = connections[db_alias]
+        output = ConsoleOutput(yes=yes)
+        loader = MigrationLoader(connection, ignore_no_migrations=True)
+
+        try:
+            loader.check_consistent_history(connection)
+        except InconsistentMigrationHistory as exc:
+            msg = str(exc)
+            output.warn("Detected inconsistency:")
+            output.warn(msg)
+
+            # Extract app/migration info from error message
+            # Expected: "Migration <app>.<name> is applied before its dependency <app>.<dep_name>"
+            import re
+
+            m = re.search(r"Migration (\S+) is applied before its dependency (\S+)", msg)
+            if not m:
+                raise CommandError(
+                    "Could not parse the inconsistency from the error message."
+                ) from exc
+
+            misapplied, dependency = m.groups()
+            misapplied_app, misapplied_name = misapplied.split(".")
+
+            output.info(f"Target: Unapply {misapplied} (it depends on {dependency})")
+
+            if dry_run:
+                output.info("Dry run — no changes made.")
+                return
+
+            if not output.confirm(f"Unapply {misapplied} in the database?"):
+                output.info("Aborted.")
+                return
+
+            record_unapplied(connection, misapplied_app, misapplied_name)
+            output.success(f"Marked {misapplied} as unapplied in django_migrations.")
+            output.info("Now run: python manage.py migrate")
+            return
+
+        output.success("No InconsistentMigrationHistory detected.")

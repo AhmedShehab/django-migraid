@@ -228,3 +228,15 @@ def describe_connection(connection: BaseDatabaseWrapper) -> str:
         return f"{engine} / {name}"
     host = settings.get("HOST") or "localhost"
     return f"{engine} @ {host} / {name}"
+
+
+def record_unapplied(
+    connection: BaseDatabaseWrapper,
+    app: str,
+    name: str,
+) -> None:
+    """Mark a migration as unapplied in django_migrations."""
+    from django.db.migrations.recorder import MigrationRecorder
+
+    recorder = MigrationRecorder(connection)
+    recorder.record_unapplied(app, name)
