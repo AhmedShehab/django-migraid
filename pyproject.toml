@@ -82,7 +82,7 @@ plugins = ["mypy_django_plugin.main"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["git.*", "gitdb.*"]
+module = ["git.*", "gitdb.*", "psycopg2.*", "MySQLdb.*"]
 ignore_missing_imports = true
 
 [tool.django-stubs]
