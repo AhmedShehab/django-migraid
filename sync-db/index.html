@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/renumber/">
+        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/sync-db/">
       
       
-        <link rel="prev" href="../fix-conflicts/">
+        <link rel="prev" href="../known-issues/">
       
       
-        <link rel="next" href="../prune/">
+        <link rel="next" href="../commands/doctor/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>renumber - django-migraid</title>
+        <title>Syncing the migrations table - django-migraid</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#renumber" class="md-skip">
+        <a href="#syncing-the-django_migrations-table" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="django-migraid" class="md-header__button md-logo" aria-label="django-migraid" data-md-component="logo">
+    <a href=".." title="django-migraid" class="md-header__button md-logo" aria-label="django-migraid" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              renumber
+              Syncing the migrations table
             
           </span>
         </div>
@@ -209,7 +209,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -228,7 +228,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../known-issues/" class="md-tabs__link">
+      <a href="../known-issues/" class="md-tabs__link">
         
   
   
@@ -245,9 +245,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../../sync-db/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -264,13 +266,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../doctor/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../commands/doctor/" class="md-tabs__link">
           
   
   
@@ -304,7 +304,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="django-migraid" class="md-nav__button md-logo" aria-label="django-migraid" data-md-component="logo">
+    <a href=".." title="django-migraid" class="md-nav__button md-logo" aria-label="django-migraid" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -334,7 +334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -361,7 +361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../known-issues/" class="md-nav__link">
+      <a href="../known-issues/" class="md-nav__link">
         
   
   
@@ -385,172 +385,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../../sync-db/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Syncing the migrations table
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-      
-        
-        
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Commands
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Commands
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../doctor/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    doctor
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../rebase/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    rebase
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fix-conflicts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    fix-conflicts
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -570,7 +404,7 @@
   <span class="md-ellipsis">
     
   
-    renumber
+    Syncing the migrations table
   
 
     
@@ -588,7 +422,7 @@
   <span class="md-ellipsis">
     
   
-    renumber
+    Syncing the migrations table
   
 
     
@@ -625,10 +459,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#zero-data-loss" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Zero data loss
       
     </span>
   </a>
@@ -636,10 +470,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keeping-the-database-in-sync" class="md-nav__link">
+  <a href="#previewing-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keeping the database in sync
+        Previewing changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipelines-no-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipelines (--no-input)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the database
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovering-from-an-existing-desync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from an existing desync
       
     </span>
   </a>
@@ -653,6 +520,83 @@
     </li>
   
 
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -662,7 +606,91 @@
   
   
     <li class="md-nav__item">
-      <a href="../prune/" class="md-nav__link">
+      <a href="../commands/rebase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    rebase
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/fix-conflicts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fix-conflicts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/renumber/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    renumber
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/prune/" class="md-nav__link">
         
   
   
@@ -690,7 +718,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../graph/" class="md-nav__link">
+      <a href="../commands/graph/" class="md-nav__link">
         
   
   
@@ -756,10 +784,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#zero-data-loss" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Zero data loss
       
     </span>
   </a>
@@ -767,10 +795,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keeping-the-database-in-sync" class="md-nav__link">
+  <a href="#previewing-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keeping the database in sync
+        Previewing changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipelines-no-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipelines (--no-input)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the database
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovering-from-an-existing-desync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from an existing desync
       
     </span>
   </a>
@@ -797,18 +858,80 @@
   
 
 
-<h1 id="renumber">renumber</h1>
-<p>Fix gap or duplicate numbering in a single app's migrations.</p>
+<h1 id="syncing-the-django_migrations-table">Syncing the <code>django_migrations</code> table</h1>
+<p>When <code>rebase</code>, <code>renumber</code>, or <code>fix-conflicts</code> rename a migration <strong>that has
+already been applied</strong>, the file on disk changes but Django's bookkeeping does
+not: the <code>django_migrations</code> table still records the old stem. Django then sees
+the new file as unapplied and the old name as missing — a desync that breaks
+<code>migrate</code>.</p>
+<p>The <code>--sync-db</code> flag closes that gap. It renames the matching
+<code>django_migrations</code> rows in lockstep with the files, in one atomic, reversible
+operation.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--allow-applied<span class="o">]</span><span class="w"> </span><span class="o">[</span>--sync-db<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-input<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>rebase<span class="w"> </span>--base<span class="w"> </span>main<span class="w"> </span>--sync-db
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>myapp<span class="w"> </span>--sync-db
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>fix-conflicts<span class="w"> </span>--sync-db
 </code></pre></div>
-<h2 id="description">Description</h2>
-<p>Standardizes the numbering of an app's migrations to be sequential (0001, 0002, 0003, ...) without gaps or duplicates, while maintaining the dependency graph.</p>
-<h2 id="keeping-the-database-in-sync">Keeping the database in sync</h2>
-<p>If any renamed migration has already been applied, add <code>--sync-db</code> to rename the
-matching <code>django_migrations</code> rows in the same atomic, reversible step (implies
-<code>--allow-applied</code>). Use <code>--no-input</code> for CI and <code>--database ALIAS</code> to target a
-non-default connection. See <a href="../../sync-db/">Syncing the <code>django_migrations</code> table</a>.</p>
+<p><code>--sync-db</code> <strong>implies <code>--allow-applied</code></strong>: because it keeps the table in step,
+renaming applied migrations is safe. (Bare <code>--allow-applied</code> still renames files
+only and will desync the table — <code>doctor</code> flags the result as <strong>E005</strong>.)</p>
+<h2 id="zero-data-loss">Zero data loss</h2>
+<p>The sync is a raw <code>UPDATE</code> of the <code>name</code> column only:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">django_migrations</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;0008_foo&#39;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">app</span><span class="o">=</span><span class="s1">&#39;myapp&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;0005_foo&#39;</span><span class="p">;</span>
+</code></pre></div>
+<p>The row id and the original <code>applied</code> timestamp are preserved — nothing is
+deleted and re-inserted. Several guarantees back this up:</p>
+<ul>
+<li><strong>Atomic.</strong> The file renames and the row <code>UPDATE</code>s run inside a single
+  per-app <code>transaction.atomic()</code> block. If anything fails — a row-count
+  mismatch, a post-apply validation regression, an I/O error — the file changes
+  are rolled back <em>and</em> the transaction is rolled back. You end up exactly where
+  you started.</li>
+<li><strong>Collision-safe.</strong> If a target name already names a different row, the sync
+  aborts before touching anything.</li>
+<li><strong>Self-verifying.</strong> Each <code>UPDATE</code> must affect exactly one row, or the whole
+  operation rolls back.</li>
+<li><strong>Reversible.</strong> Before committing, an inverse-SQL script is written to the
+  working directory:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>migraid-syncdb-undo-&lt;app&gt;-&lt;timestamp&gt;.sql
+</code></pre></div>
+<p>Replay it against the same database to restore the previous names.</p>
+<h2 id="previewing-changes">Previewing changes</h2>
+<p>Without <code>--no-input</code>, the command prints the target database, a table of every
+row it will rename (with the <code>applied</code> timestamp it will preserve), and the
+literal SQL — then asks for confirmation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Target DB: postgres @ db.prod.internal / appdb
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>django_migrations changes (1 row(s)):
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  myapp  0005_foo -&gt; 0008_foo  (applied 2026-01-02 …, kept)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>SQL to run:
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  UPDATE django_migrations SET name=&#39;0008_foo&#39; WHERE app=&#39;myapp&#39; AND name=&#39;0005_foo&#39;;
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Apply these changes? [y/N]
+</code></pre></div>
+<p><code>--dry-run</code> shows the same preview and writes nothing — no files, no rows, no
+undo script.</p>
+<h2 id="pipelines-no-input">Pipelines (<code>--no-input</code>)</h2>
+<p>For CI, <code>--no-input</code> (alias: <code>--yes</code>) skips the confirmation prompt:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>rebase<span class="w"> </span>--base<span class="w"> </span>main<span class="w"> </span>--sync-db<span class="w"> </span>--no-input
+</code></pre></div>
+<p>The target database is still echoed for the audit log. There is no local-host
+restriction — syncing is a deliberate, opt-in operation meant to run against
+real databases — so make sure the job points at the database you intend.</p>
+<h2 id="choosing-the-database">Choosing the database</h2>
+<p><code>--database ALIAS</code> selects which connection's <code>django_migrations</code> table to sync
+(default: <code>default</code>), mirroring Django's <code>migrate --database</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>rebase<span class="w"> </span>--sync-db<span class="w"> </span>--database<span class="w"> </span>replica<span class="w"> </span>--no-input
+</code></pre></div>
+<p>Run the command once per database alias you need to sync.</p>
+<h2 id="recovering-from-an-existing-desync">Recovering from an existing desync</h2>
+<p>If a migration was already renamed file-only (e.g. <code>--allow-applied</code> without
+<code>--sync-db</code>), there is no rename in flight for <code>--sync-db</code> to attach to.
+<code>doctor</code> reports it as <strong>E005</strong> with the exact recovery SQL. Either:</p>
+<ol>
+<li>Revert the file rename in git, then re-run the command with <code>--sync-db</code>; or</li>
+<li>Run the <code>UPDATE</code> from the <code>doctor</code> hint by hand.</li>
+</ol>
 
 
 
@@ -858,10 +981,10 @@ non-default connection. See <a href="../../sync-db/">Syncing the <code>django_mi
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.instant", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
