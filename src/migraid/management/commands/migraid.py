@@ -401,6 +401,30 @@ class Command(BaseCommand):
             help="Database alias to repair (default: default).",
         )
 
+        # prune
+        prune = subparsers.add_parser("prune", help="Remove stale django_migrations rows")
+        prune.add_argument("--dry-run", action="store_true", help="Preview only, no rows deleted")
+        prune.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
+        prune.add_argument(
+            "--noinput",
+            "--no-input",
+            action="store_true",
+            dest="no_input",
+            help="Alias for --yes (non-interactive / CI).",
+        )
+        prune.add_argument(
+            "--database",
+            default="default",
+            metavar="ALIAS",
+            help="Database alias to prune (default: default).",
+        )
+        prune.add_argument(
+            "--allow-remote-db",
+            action="store_true",
+            dest="allow_remote_db",
+            help="Allow pruning against a non-local database host.",
+        )
+
         # graph
         graph = subparsers.add_parser("graph", help="Visualize the migration DAG")
         graph.add_argument("app", nargs="?", metavar="LABEL", help="Limit to one app")
