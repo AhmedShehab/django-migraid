@@ -992,7 +992,7 @@ Run <code>python manage.py migraid doctor</code> to find which migration has the
 <p><strong>The Problem:</strong> Your migrations are numbered <code>0001</code>, <code>0002</code>, <code>0005</code>. While Django handles this, it can lead to confusion and is often a sign of a messy rebase.</p>
 <p><strong>Search Terms:</strong> <code>django migration gap numbering</code>, <code>renumber django migrations</code>.</p>
 <p><strong>How to fix:</strong>
-Use <code>renumber</code> to close the gaps (Error <strong>E003</strong>):
+Use <code>renumber</code> to close the gaps (Warning <strong>W006</strong>):
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;
 </code></pre></div></p>
 <h2 id="stale-entries-in-django_migrations">Stale entries in <code>django_migrations</code></h2>

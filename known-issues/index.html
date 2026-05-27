@@ -489,10 +489,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#e003-out-of-order-gap-numbering" class="md-nav__link">
+  <a href="#w006-out-of-order-gap-numbering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        E003 — Out-of-Order / Gap Numbering
+        W006 — Out-of-Order / Gap Numbering
       
     </span>
   </a>
@@ -963,10 +963,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#e003-out-of-order-gap-numbering" class="md-nav__link">
+  <a href="#w006-out-of-order-gap-numbering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        E003 — Out-of-Order / Gap Numbering
+        W006 — Out-of-Order / Gap Numbering
       
     </span>
   </a>
@@ -1106,7 +1106,7 @@
 <p><strong>Manual fix:</strong> Break the cycle by splitting one of the foreign keys into a separate migration, or restructuring cross-app dependencies.</p>
 <p><strong>Auto-fix:</strong> Not possible automatically — requires domain knowledge of which dependency to break.</p>
 <hr />
-<h2 id="e003-out-of-order-gap-numbering">E003 — Out-of-Order / Gap Numbering</h2>
+<h2 id="w006-out-of-order-gap-numbering">W006 — Out-of-Order / Gap Numbering</h2>
 <p><strong>Symptoms:</strong> Migration files numbered <code>0001</code>, <code>0003</code> (skipping <code>0002</code>), or two files with the same prefix after a rebase.</p>
 <p><strong>Root cause:</strong> After a <code>git rebase</code>, local migrations may have numbering that conflicts with or creates gaps relative to the target branch.</p>
 <p><strong>Manual fix:</strong> Rename migration files and update their <code>dependencies</code> lists.</p>
