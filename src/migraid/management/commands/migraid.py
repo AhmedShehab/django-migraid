@@ -484,11 +484,7 @@ class Command(BaseCommand):
             cfg.inject_all()
             # Auto-resolve --database from the current branch when not explicitly set
             subcommand = options.get("subcommand", "")
-            if (
-                subcommand != "db"
-                and "database" in options
-                and "--database" not in sys.argv
-            ):
+            if subcommand != "db" and "database" in options and "--database" not in sys.argv:
                 branch = current_git_branch()
                 if branch:
                     entry = cfg.get_entry(branch)
@@ -1153,8 +1149,10 @@ class Command(BaseCommand):
         from rich.table import Table
 
         git_root = find_git_root()
-        cfg = BranchDBConfig.load(git_root) if git_root is not None else BranchDBConfig(
-            config_path=Path(".migraid/config.json")
+        cfg = (
+            BranchDBConfig.load(git_root)
+            if git_root is not None
+            else BranchDBConfig(config_path=Path(".migraid/config.json"))
         )
 
         if not cfg.branch_dbs:

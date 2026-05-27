@@ -164,8 +164,7 @@ def create_database(db_config: dict[str, Any]) -> None:
         try:
             with my_conn.cursor() as cur:
                 cur.execute(
-                    f"CREATE DATABASE `{db_name}` "
-                    "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                    f"CREATE DATABASE `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
                 )
             my_conn.commit()
         finally:

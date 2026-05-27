@@ -236,9 +236,13 @@ def test_db_add_alias_override(tmp_path: Path) -> None:
             patch("django.core.management.call_command"),
         ):
             call_command(
-                "migraid", "db", "add",
-                "--database", "test_base2",
-                "--alias", "my_custom_alias",
+                "migraid",
+                "db",
+                "add",
+                "--database",
+                "test_base2",
+                "--alias",
+                "my_custom_alias",
                 "--yes",
             )
 
@@ -268,9 +272,7 @@ def test_db_add_rejects_duplicate_branch(tmp_path: Path) -> None:
         with (
             patch("migraid.operations.branch_db.find_git_root", return_value=git_root),
             patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
-            patch(
-                "migraid.operations.branch_db.current_git_branch", return_value="feature/dup"
-            ),
+            patch("migraid.operations.branch_db.current_git_branch", return_value="feature/dup"),
             patch(
                 "migraid.management.commands.migraid.current_git_branch",
                 return_value="feature/dup",
@@ -385,12 +387,8 @@ def test_db_prune_removes_stale_branches(tmp_path: Path) -> None:
     with (
         patch("migraid.operations.branch_db.find_git_root", return_value=git_root),
         patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
-        patch(
-            "migraid.operations.branch_db.local_git_branch_names", return_value={"main"}
-        ),
-        patch(
-            "migraid.management.commands.migraid.local_git_branch_names", return_value={"main"}
-        ),
+        patch("migraid.operations.branch_db.local_git_branch_names", return_value={"main"}),
+        patch("migraid.management.commands.migraid.local_git_branch_names", return_value={"main"}),
     ):
         call_command("migraid", "db", "prune", "--yes")
 
@@ -438,12 +436,8 @@ def test_db_prune_nothing_to_do(tmp_path: Path) -> None:
     with (
         patch("migraid.operations.branch_db.find_git_root", return_value=git_root),
         patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
-        patch(
-            "migraid.operations.branch_db.local_git_branch_names", return_value={"main"}
-        ),
-        patch(
-            "migraid.management.commands.migraid.local_git_branch_names", return_value={"main"}
-        ),
+        patch("migraid.operations.branch_db.local_git_branch_names", return_value={"main"}),
+        patch("migraid.management.commands.migraid.local_git_branch_names", return_value={"main"}),
     ):
         # Should not raise
         call_command("migraid", "db", "prune", "--yes")
@@ -532,9 +526,7 @@ def test_execute_auto_resolves_database_for_current_branch(tmp_path: Path) -> No
         with (
             patch("migraid.operations.branch_db.find_git_root", return_value=git_root),
             patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
-            patch(
-                "migraid.operations.branch_db.current_git_branch", return_value="feature/auto"
-            ),
+            patch("migraid.operations.branch_db.current_git_branch", return_value="feature/auto"),
             patch(
                 "migraid.management.commands.migraid.current_git_branch",
                 return_value="feature/auto",
@@ -640,9 +632,7 @@ def test_create_database_postgis_calls_create() -> None:
     mock_pg = _mock_psycopg2()
     mock_pg_sql = MagicMock()
     with patch.dict(sys.modules, {"psycopg2": mock_pg, "psycopg2.sql": mock_pg_sql}):
-        create_database(
-            {"ENGINE": "django.contrib.gis.db.backends.postgis", "NAME": "gisdb"}
-        )
+        create_database({"ENGINE": "django.contrib.gis.db.backends.postgis", "NAME": "gisdb"})
     mock_pg.connect.assert_called_once()
 
 
@@ -786,6 +776,7 @@ def test_local_git_branch_names_returns_empty_on_error() -> None:
         pass  # just confirm the function itself handles exceptions
     # Test the real function by simulating git.Repo raising
     import sys
+
     mock_git = MagicMock()
     mock_git.Repo.side_effect = Exception("no repo")
     with patch.dict(sys.modules, {"git": mock_git}):
@@ -795,6 +786,7 @@ def test_local_git_branch_names_returns_empty_on_error() -> None:
 
 def test_current_git_branch_returns_none_on_error() -> None:
     import sys
+
     mock_git = MagicMock()
     mock_git.Repo.side_effect = Exception("no repo")
     with patch.dict(sys.modules, {"git": mock_git}):
