@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0b2] - 2026-05-27
+
 ### Added
 - `linearize` command: rewrite an app's history into a gap-free `0001..N` chain where each migration depends on exactly one predecessor. Renumbers, collapses redundant in-app dependency lists, resolves forks (subsumes `fix-conflicts`), and deletes merge migrations. Preserves cross-app dependencies by default (`--strip-cross-app` to drop them); aborts on merges that carry operations or in-app `run_before`. Supports `--sync-db`, which now also `DELETE`s `django_migrations` rows for removed applied merges (with re-`INSERT` undo SQL).
 
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safety pipeline: dirty-tree guard, applied-migration guard, backup ref, undo log, post-apply validation
 - Apache 2.0 license
 
-[Unreleased]: https://github.com/AhmedShehab/django-migraid/compare/v0.1.0b1...HEAD
+[Unreleased]: https://github.com/AhmedShehab/django-migraid/compare/v0.1.0b2...HEAD
+[0.1.0b2]: https://github.com/AhmedShehab/django-migraid/compare/v0.1.0b1...v0.1.0b2
 [0.1.0b1]: https://github.com/AhmedShehab/django-migraid/releases/tag/v0.1.0b1
 [0.1.0]: https://github.com/AhmedShehab/django-migraid/releases/tag/v0.1.0
