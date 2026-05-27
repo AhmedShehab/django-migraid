@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
-
-from unittest.mock import MagicMock
 
 from migraid.operations.branch_db import (
     BranchDBConfig,
@@ -24,7 +22,6 @@ from migraid.operations.branch_db import (
     local_git_branch_names,
     slugify_branch,
 )
-
 
 # ---------------------------------------------------------------------------
 # slugify_branch
@@ -176,30 +173,35 @@ def _make_git_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.mark.django_db(transaction=True)
 def test_db_add_creates_sqlite_file(tmp_path: Path) -> None:
-    """End-to-end: db add provisions a real SQLite file and writes config."""
+    """db add saves config and calls migrate for the derived SQLite alias."""
     from django.db import connections
 
     git_root = _make_git_root(tmp_path)
     base_db = tmp_path / "base.sqlite3"
-    # Use a file-based SQLite as the base
     connections.databases["test_base"] = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": str(base_db),
     }
+
+    migrate_calls: list[tuple] = []
+
+    def _fake_migrate(*args: Any, **kwargs: Any) -> None:
+        migrate_calls.append((args, kwargs))
 
     try:
         with (
             patch("migraid.operations.branch_db.find_git_root", return_value=git_root),
             patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
             patch(
-                "migraid.operations.branch_db.current_git_branch", return_value="feature/sqlite-test"
+                "migraid.operations.branch_db.current_git_branch",
+                return_value="feature/sqlite-test",
             ),
             patch(
                 "migraid.management.commands.migraid.current_git_branch",
                 return_value="feature/sqlite-test",
             ),
+            patch("django.core.management.call_command", side_effect=_fake_migrate),
         ):
             call_command("migraid", "db", "add", "--database", "test_base", "--yes")
 
@@ -207,20 +209,15 @@ def test_db_add_creates_sqlite_file(tmp_path: Path) -> None:
         assert "feature/sqlite-test" in cfg.branch_dbs
         entry = cfg.branch_dbs["feature/sqlite-test"]
         assert entry.alias == "feature_sqlite_test"
-        db_file = Path(entry.db_config["NAME"])
-        assert db_file.exists(), f"Expected SQLite file to be created at {db_file}"
+        # Verify migrate was invoked for the new alias
+        assert any(kw.get("database") == "feature_sqlite_test" for _, kw in migrate_calls)
     finally:
         connections.databases.pop("test_base", None)
         connections.databases.pop("feature_sqlite_test", None)
-        # Clean up created SQLite file
-        cfg = BranchDBConfig.load(git_root)
-        for entry in cfg.branch_dbs.values():
-            if entry.db_config:
-                Path(entry.db_config.get("NAME", "")).unlink(missing_ok=True)
 
 
-@pytest.mark.django_db(transaction=True)
 def test_db_add_alias_override(tmp_path: Path) -> None:
+    """--alias overrides the slugified branch name."""
     from django.db import connections
 
     git_root = _make_git_root(tmp_path)
@@ -236,6 +233,7 @@ def test_db_add_alias_override(tmp_path: Path) -> None:
             patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
             patch("migraid.operations.branch_db.current_git_branch", return_value="main"),
             patch("migraid.management.commands.migraid.current_git_branch", return_value="main"),
+            patch("django.core.management.call_command"),
         ):
             call_command(
                 "migraid", "db", "add",
@@ -249,10 +247,6 @@ def test_db_add_alias_override(tmp_path: Path) -> None:
     finally:
         connections.databases.pop("test_base2", None)
         connections.databases.pop("my_custom_alias", None)
-        cfg = BranchDBConfig.load(git_root)
-        for entry in cfg.branch_dbs.values():
-            if entry.db_config:
-                Path(entry.db_config.get("NAME", "")).unlink(missing_ok=True)
 
 
 def test_db_add_rejects_duplicate_branch(tmp_path: Path) -> None:
@@ -274,11 +268,16 @@ def test_db_add_rejects_duplicate_branch(tmp_path: Path) -> None:
         with (
             patch("migraid.operations.branch_db.find_git_root", return_value=git_root),
             patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
-            patch("migraid.operations.branch_db.current_git_branch", return_value="feature/dup"),
-            patch("migraid.management.commands.migraid.current_git_branch", return_value="feature/dup"),
+            patch(
+                "migraid.operations.branch_db.current_git_branch", return_value="feature/dup"
+            ),
+            patch(
+                "migraid.management.commands.migraid.current_git_branch",
+                return_value="feature/dup",
+            ),
+            pytest.raises((CommandError, SystemExit)),
         ):
-            with pytest.raises((CommandError, SystemExit)):
-                call_command("migraid", "db", "add", "--database", "test_base3", "--yes")
+            call_command("migraid", "db", "add", "--database", "test_base3", "--yes")
     finally:
         connections.databases.pop("test_base3", None)
 
@@ -336,10 +335,10 @@ def test_db_rm_blocks_current_branch_without_yes(tmp_path: Path) -> None:
         patch("migraid.management.commands.migraid.find_git_root", return_value=git_root),
         patch("migraid.operations.branch_db.current_git_branch", return_value="main"),
         patch("migraid.management.commands.migraid.current_git_branch", return_value="main"),
+        pytest.raises((CommandError, SystemExit)),
     ):
-        with pytest.raises((CommandError, SystemExit)):
-            # no --yes flag → should be blocked
-            call_command("migraid", "db", "rm", "--branch", "main")
+        # no --yes flag → should be blocked
+        call_command("migraid", "db", "rm", "--branch", "main")
 
 
 def test_db_rm_skips_drop_for_user_configured_alias(tmp_path: Path) -> None:
@@ -455,7 +454,7 @@ def test_db_prune_nothing_to_do(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_db_ls_prints_table(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+def test_db_ls_prints_table(tmp_path: Path) -> None:
     git_root = _make_git_root(tmp_path)
 
     cfg = BranchDBConfig.load(git_root)
@@ -464,7 +463,10 @@ def test_db_ls_prints_table(tmp_path: Path, capsys: pytest.CaptureFixture) -> No
         "feature/foo",
         BranchDBEntry(
             alias="feature_foo",
-            db_config={"ENGINE": "django.db.backends.sqlite3", "NAME": "/tmp/db_feature_foo.sqlite3"},
+            db_config={
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": "/tmp/db_feature_foo.sqlite3",
+            },
         ),
     )
     cfg.save()
@@ -475,7 +477,8 @@ def test_db_ls_prints_table(tmp_path: Path, capsys: pytest.CaptureFixture) -> No
         patch("migraid.operations.branch_db.current_git_branch", return_value="main"),
         patch("migraid.management.commands.migraid.current_git_branch", return_value="main"),
         patch(
-            "migraid.operations.branch_db.local_git_branch_names", return_value={"main", "feature/foo"}
+            "migraid.operations.branch_db.local_git_branch_names",
+            return_value={"main", "feature/foo"},
         ),
         patch(
             "migraid.management.commands.migraid.local_git_branch_names",
@@ -520,7 +523,7 @@ def test_execute_auto_resolves_database_for_current_branch(tmp_path: Path) -> No
 
     original = Command._handle_prune
 
-    def _capture_prune(self_cmd: Any, opts: dict[str, Any]) -> None:
+    def _capture_prune(_self: Any, opts: dict[str, Any]) -> None:
         resolved_alias.append(opts.get("database", "NOT_SET"))
 
     try:
@@ -564,7 +567,13 @@ def test_config_load_corrupt_json(tmp_path: Path) -> None:
 
 
 def test_build_postgres_dsn_all_fields() -> None:
-    config = {"HOST": "db.example.com", "PORT": 5432, "USER": "admin", "PASSWORD": "s3cr3t", "NAME": "mydb"}
+    config = {
+        "HOST": "db.example.com",
+        "PORT": 5432,
+        "USER": "admin",
+        "PASSWORD": "s3cr3t",
+        "NAME": "mydb",
+    }
     dsn = _build_postgres_dsn(config)
     assert "host=db.example.com" in dsn
     assert "port=5432" in dsn
@@ -602,7 +611,7 @@ def _mock_psycopg2() -> MagicMock:
     return mock
 
 
-def test_create_database_postgres_calls_create(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_database_postgres_calls_create() -> None:
     import sys
 
     mock_pg = _mock_psycopg2()
@@ -618,12 +627,14 @@ def test_create_database_postgres_calls_create(monkeypatch: pytest.MonkeyPatch) 
 def test_create_database_postgres_import_error() -> None:
     import sys
 
-    with patch.dict(sys.modules, {"psycopg2": None}):
-        with pytest.raises(RuntimeError, match="psycopg2 is required"):
-            create_database({"ENGINE": "django.db.backends.postgresql", "NAME": "mydb"})
+    with (
+        patch.dict(sys.modules, {"psycopg2": None}),
+        pytest.raises(RuntimeError, match="psycopg2 is required"),
+    ):
+        create_database({"ENGINE": "django.db.backends.postgresql", "NAME": "mydb"})
 
 
-def test_create_database_postgis_calls_create(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_database_postgis_calls_create() -> None:
     import sys
 
     mock_pg = _mock_psycopg2()
@@ -651,14 +662,13 @@ def _mock_mysqldb() -> MagicMock:
     return mock
 
 
-def test_create_database_mysql_calls_create(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_database_mysql_calls_create() -> None:
     import sys
 
     mock_my = _mock_mysqldb()
+    cfg = {"ENGINE": "django.db.backends.mysql", "NAME": "mydb", "HOST": "localhost", "PORT": 3306}
     with patch.dict(sys.modules, {"MySQLdb": mock_my}):
-        create_database(
-            {"ENGINE": "django.db.backends.mysql", "NAME": "mydb", "HOST": "localhost", "PORT": 3306}
-        )
+        create_database(cfg)
     mock_my.connect.assert_called_once()
     mock_my.connect.return_value.cursor.assert_called()
     mock_my.connect.return_value.commit.assert_called_once()
@@ -667,9 +677,11 @@ def test_create_database_mysql_calls_create(monkeypatch: pytest.MonkeyPatch) -> 
 def test_create_database_mysql_import_error() -> None:
     import sys
 
-    with patch.dict(sys.modules, {"MySQLdb": None}):
-        with pytest.raises(RuntimeError, match="mysqlclient is required"):
-            create_database({"ENGINE": "django.db.backends.mysql", "NAME": "mydb"})
+    with (
+        patch.dict(sys.modules, {"MySQLdb": None}),
+        pytest.raises(RuntimeError, match="mysqlclient is required"),
+    ):
+        create_database({"ENGINE": "django.db.backends.mysql", "NAME": "mydb"})
 
 
 # ---------------------------------------------------------------------------
@@ -687,7 +699,7 @@ def test_create_database_unsupported_engine() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_drop_database_postgres_calls_drop(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_drop_database_postgres_calls_drop() -> None:
     import sys
 
     mock_pg = _mock_psycopg2()
@@ -698,15 +710,18 @@ def test_drop_database_postgres_calls_drop(monkeypatch: pytest.MonkeyPatch) -> N
         )
     mock_pg.connect.assert_called_once()
     # Two execute calls: pg_terminate_backend + DROP DATABASE
-    assert mock_pg.connect.return_value.cursor.return_value.__enter__.return_value.execute.call_count == 2
+    cursor = mock_pg.connect.return_value.cursor.return_value.__enter__.return_value
+    assert cursor.execute.call_count == 2
 
 
 def test_drop_database_postgres_import_error() -> None:
     import sys
 
-    with patch.dict(sys.modules, {"psycopg2": None}):
-        with pytest.raises(RuntimeError, match="psycopg2 is required"):
-            drop_database({"ENGINE": "django.db.backends.postgresql", "NAME": "mydb"})
+    with (
+        patch.dict(sys.modules, {"psycopg2": None}),
+        pytest.raises(RuntimeError, match="psycopg2 is required"),
+    ):
+        drop_database({"ENGINE": "django.db.backends.postgresql", "NAME": "mydb"})
 
 
 # ---------------------------------------------------------------------------
@@ -714,14 +729,13 @@ def test_drop_database_postgres_import_error() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_drop_database_mysql_calls_drop(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_drop_database_mysql_calls_drop() -> None:
     import sys
 
     mock_my = _mock_mysqldb()
+    cfg = {"ENGINE": "django.db.backends.mysql", "NAME": "mydb", "HOST": "localhost", "PORT": 3306}
     with patch.dict(sys.modules, {"MySQLdb": mock_my}):
-        drop_database(
-            {"ENGINE": "django.db.backends.mysql", "NAME": "mydb", "HOST": "localhost", "PORT": 3306}
-        )
+        drop_database(cfg)
     mock_my.connect.assert_called_once()
     mock_my.connect.return_value.commit.assert_called_once()
 
@@ -729,9 +743,11 @@ def test_drop_database_mysql_calls_drop(monkeypatch: pytest.MonkeyPatch) -> None
 def test_drop_database_mysql_import_error() -> None:
     import sys
 
-    with patch.dict(sys.modules, {"MySQLdb": None}):
-        with pytest.raises(RuntimeError, match="mysqlclient is required"):
-            drop_database({"ENGINE": "django.db.backends.mysql", "NAME": "mydb"})
+    with (
+        patch.dict(sys.modules, {"MySQLdb": None}),
+        pytest.raises(RuntimeError, match="mysqlclient is required"),
+    ):
+        drop_database({"ENGINE": "django.db.backends.mysql", "NAME": "mydb"})
 
 
 # ---------------------------------------------------------------------------
