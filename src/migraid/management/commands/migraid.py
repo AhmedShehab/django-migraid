@@ -353,9 +353,7 @@ class Command(BaseCommand):
         _add_db_sync_args(rn)
 
         # prune
-        prune = subparsers.add_parser(
-            "prune", help="Remove stale django_migrations rows"
-        )
+        prune = subparsers.add_parser("prune", help="Remove stale django_migrations rows")
         prune.add_argument("--dry-run", action="store_true", help="Preview only, no rows deleted")
         prune.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
         prune.add_argument(
@@ -803,9 +801,7 @@ class Command(BaseCommand):
         try:
             guard = GitGuard()
         except NotAGitRepoError as exc:
-            raise CommandError(
-                f"sync-branch requires a git repository: {exc}"
-            ) from exc
+            raise CommandError(f"sync-branch requires a git repository: {exc}") from exc
 
         app_dirs = _get_app_dirs(app_label)
         analyzer = MigrationAnalyzer(app_dirs=app_dirs, connection=connection)
@@ -833,16 +829,12 @@ class Command(BaseCommand):
                 output.info(f"  {app} → {target or 'zero'}")
 
         if plan.stale_rows:
-            self.stdout.write(
-                f"Stale django_migrations rows to delete: {len(plan.stale_rows)}"
-            )
+            self.stdout.write(f"Stale django_migrations rows to delete: {len(plan.stale_rows)}")
             for app, name in plan.stale_rows:
                 self.stdout.write(f"  {app}.{name}")
 
         if plan.untracked_files:
-            self.stdout.write(
-                f"Untracked migration files to delete: {len(plan.untracked_files)}"
-            )
+            self.stdout.write(f"Untracked migration files to delete: {len(plan.untracked_files)}")
             for f in plan.untracked_files:
                 self.stdout.write(f"  {f}")
 
@@ -863,9 +855,7 @@ class Command(BaseCommand):
                 try:
                     _call_migrate("migrate", app, target_arg, database=db_alias, verbosity=1)
                 except Exception as exc:
-                    raise CommandError(
-                        f"Failed to migrate {app} to {target_arg}: {exc}"
-                    ) from exc
+                    raise CommandError(f"Failed to migrate {app} to {target_arg}: {exc}") from exc
                 output.success(f"Migrated {app} to {target_arg}.")
 
         if plan.stale_rows:

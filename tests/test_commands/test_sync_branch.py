@@ -289,9 +289,7 @@ def test_cmd_update_db_deletes_stale_rows_and_files(monkeypatch, tmp_path) -> No
         call_command("migraid", "sync-branch", "--update-db", "--yes")
 
         assert not fake_file.exists()
-        assert not recorder.Migration.objects.filter(
-            app="branchapp", name="0002_feature"
-        ).exists()
+        assert not recorder.Migration.objects.filter(app="branchapp", name="0002_feature").exists()
     finally:
         recorder.Migration.objects.filter(app="branchapp").delete()
 
