@@ -56,6 +56,24 @@ python manage.py migraid db prune [--dry-run] [--yes]
 - `--dry-run`: Preview which entries would be removed.
 - `--yes`: Skip the confirmation prompt.
 
+## Automation
+
+### AUTO_PROVISION_BRANCHES
+
+If you want `django-migraid` to automatically provision a new database whenever you switch to a branch that doesn't have one, set the `AUTO_PROVISION_BRANCHES` environment variable to `TRUE`.
+
+```bash
+# In your .env or shell
+AUTO_PROVISION_BRANCHES=TRUE
+```
+
+When this is enabled, running any `migraid` command on a new branch will:
+1. Detect that the branch has no registered database.
+2. Derive a new database configuration from your `default` database.
+3. Physically create the database.
+4. Run `python manage.py migrate` on it.
+5. Register it so future commands (including `runserver`) use it automatically.
+
 ## How it works
 
 `django-migraid` stores its configuration in a `.migraid/config.json` file in your repository root. You should add `.migraid/` to your `.gitignore` if you don't want to share these mappings with other developers or if they contain credentials.

@@ -278,3 +278,48 @@ def current_git_branch() -> str | None:
         return repo.active_branch.name
     except Exception:
         return None
+
+
+def provision_branch_db(
+    cfg: BranchDBConfig,
+    branch: str,
+    base_alias: str = "default",
+    alias_override: str | None = None,
+) -> BranchDBEntry:
+    """Provision a new database for a branch and register it in the config."""
+    from django.core.management import call_command as _call_migrate
+    from django.db import connections
+
+    if cfg.get_entry(branch) is not None:
+        raise RuntimeError(f"Branch '{branch}' already has a registered database.")
+
+    alias = alias_override or slugify_branch(branch)
+
+    # Check alias not already taken by another branch
+    taken_aliases = {e.alias for e in cfg.branch_dbs.values()}
+    if alias in taken_aliases:
+        raise RuntimeError(f"Alias '{alias}' is already registered for another branch.")
+
+    if base_alias not in connections.databases:
+        raise RuntimeError(f"Base database alias '{base_alias}' is not configured in DATABASES.")
+
+    base_config = dict(connections[base_alias].settings_dict)
+    db_config = derive_new_db_config(base_config, alias)
+
+    # Inject alias so migrate can use it in this process
+    connections.databases[alias] = _fill_db_defaults(db_config)
+
+    try:
+        create_database(db_config)
+    except Exception as exc:
+        raise RuntimeError(f"Failed to create database: {exc}") from exc
+
+    try:
+        _call_migrate("migrate", database=alias, verbosity=1)
+    except Exception as exc:
+        raise RuntimeError(f"migrate failed: {exc}") from exc
+
+    entry = BranchDBEntry(alias=alias, db_config=db_config)
+    cfg.register(branch, entry)
+    cfg.save()
+    return entry

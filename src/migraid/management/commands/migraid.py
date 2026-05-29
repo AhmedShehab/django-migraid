@@ -22,6 +22,7 @@ from ...operations.branch_db import (
     drop_database,
     find_git_root,
     local_git_branch_names,
+    provision_branch_db,
     slugify_branch,
 )
 from ...operations.plan import (
@@ -519,11 +520,25 @@ class Command(BaseCommand):
         if git_root is not None:
             cfg = BranchDBConfig.load(git_root)
             cfg.inject_all()
-            # Auto-resolve --database from the current branch when not explicitly set
-            subcommand = options.get("subcommand", "")
-            if subcommand != "db" and "database" in options and "--database" not in sys.argv:
-                branch = current_git_branch()
-                if branch:
+
+            branch = current_git_branch()
+            if branch:
+                # Feature: AUTO_PROVISION_BRANCHES=TRUE
+                import os
+
+                auto_provision = os.environ.get("AUTO_PROVISION_BRANCHES", "").lower() == "true"
+                if auto_provision and cfg.get_entry(branch) is None:
+                    output = ConsoleOutput()
+                    output.info(f"AUTO_PROVISION_BRANCHES: Provisioning DB for branch '{branch}'...")
+                    try:
+                        provision_branch_db(cfg, branch)
+                        output.success(f"Provisioned and registered database for '{branch}'.")
+                    except Exception as exc:
+                        output.error(f"Auto-provisioning failed: {exc}")
+
+                # Auto-resolve --database from the current branch when not explicitly set
+                subcommand = options.get("subcommand", "")
+                if subcommand != "db" and "database" in options and "--database" not in sys.argv:
                     entry = cfg.get_entry(branch)
                     if entry:
                         options["database"] = entry.alias
@@ -1014,25 +1029,13 @@ class Command(BaseCommand):
             )
 
         alias = alias_override or slugify_branch(branch)
+        db_name = alias  # fallback for display
 
-        # Check alias not already taken by another branch
-        taken_aliases = {e.alias for e in cfg.branch_dbs.values()}
-        if alias in taken_aliases:
-            raise CommandError(
-                f"Alias '{alias}' is already registered for another branch. "
-                "Use --alias to specify a different name."
-            )
-
-        from django.db import connections
-
-        if base_alias not in connections.databases:
-            raise CommandError(
-                f"Base database alias '{base_alias}' is not configured in DATABASES."
-            )
-
-        base_config = dict(connections[base_alias].settings_dict)
-        db_config = derive_new_db_config(base_config, alias)
-        db_name = db_config.get("NAME") or alias
+        if base_alias in connections.databases:
+             base_config = dict(connections[base_alias].settings_dict)
+             # Derive name only for display before the real provision call
+             tmp_config = derive_new_db_config(base_config, alias)
+             db_name = tmp_config.get("NAME") or alias
 
         output.info(f"Branch:    {branch}")
         output.info(f"New alias: {alias}")
@@ -1042,27 +1045,10 @@ class Command(BaseCommand):
             output.info("Aborted.")
             return
 
-        # Inject alias so migrate can use it in this process
-        connections.databases[alias] = _fill_db_defaults(db_config)
-
         try:
-            create_database(db_config)
+            provision_branch_db(cfg, branch, base_alias=base_alias, alias_override=alias_override)
         except RuntimeError as exc:
             raise CommandError(str(exc)) from exc
-        except Exception as exc:
-            raise CommandError(f"Failed to create database: {exc}") from exc
-
-        from django.core.management import call_command as _call_migrate
-
-        output.info(f"Running migrate --database {alias} ...")
-        try:
-            _call_migrate("migrate", database=alias, verbosity=1)
-        except Exception as exc:
-            raise CommandError(f"migrate failed: {exc}") from exc
-
-        entry = BranchDBEntry(alias=alias, db_config=db_config)
-        cfg.register(branch, entry)
-        cfg.save()
 
         output.success(f"Registered branch '{branch}' → alias '{alias}' ({db_name}).")
 
