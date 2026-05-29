@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0b7] - 2026-05-29
+
+### Added
+- `db` subcommand group for database-per-branch lifecycle management.
+    - `db add`: Provision and register a new database for the current git branch.
+    - `db ls`: List all registered branch-database mappings.
+    - `db rm`: Remove a registration and drop the associated database.
+    - `db prune`: Clean up registrations for git branches that no longer exist.
+- `repair` subcommand: Fix `InconsistentMigrationHistory` by marking misapplied migrations as unapplied in the database.
+- Auto-injection of branch databases: `migraid` now automatically detects the current branch and uses its registered database alias if available.
+
+### Fixed
+- Restored `prune` subcommand which was accidentally removed in a previous beta.
+
 ## [0.2.0b3] - 2026-05-27
 
 ### Fixed
