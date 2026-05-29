@@ -519,23 +519,10 @@ class Command(BaseCommand):
         git_root = find_git_root()
         if git_root is not None:
             cfg = BranchDBConfig.load(git_root)
-            cfg.inject_all()
+            # cfg.inject_all() is now handled by MigraidConfig.ready()
 
             branch = current_git_branch()
             if branch:
-                # Feature: AUTO_PROVISION_BRANCHES=TRUE
-                import os
-
-                auto_provision = os.environ.get("AUTO_PROVISION_BRANCHES", "").lower() == "true"
-                if auto_provision and cfg.get_entry(branch) is None:
-                    output = ConsoleOutput()
-                    output.info(f"AUTO_PROVISION_BRANCHES: Provisioning DB for branch '{branch}'...")
-                    try:
-                        provision_branch_db(cfg, branch)
-                        output.success(f"Provisioned and registered database for '{branch}'.")
-                    except Exception as exc:
-                        output.error(f"Auto-provisioning failed: {exc}")
-
                 # Auto-resolve --database from the current branch when not explicitly set
                 subcommand = options.get("subcommand", "")
                 if subcommand != "db" and "database" in options and "--database" not in sys.argv:
