@@ -1018,6 +1018,8 @@ class Command(BaseCommand):
         alias = alias_override or slugify_branch(branch)
         db_name = alias  # fallback for display
 
+        from django.db import connections
+
         if base_alias in connections.databases:
              base_config = dict(connections[base_alias].settings_dict)
              # Derive name only for display before the real provision call
