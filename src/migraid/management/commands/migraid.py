@@ -14,9 +14,6 @@ from ...analysis.loader import MigrationAnalyzer
 from ...operations.backup import DirtyWorkingTreeError, GitGuard, NotAGitRepoError
 from ...operations.branch_db import (
     BranchDBConfig,
-    BranchDBEntry,
-    _fill_db_defaults,
-    create_database,
     current_git_branch,
     derive_new_db_config,
     drop_database,
@@ -1021,10 +1018,10 @@ class Command(BaseCommand):
         from django.db import connections
 
         if base_alias in connections.databases:
-             base_config = dict(connections[base_alias].settings_dict)
-             # Derive name only for display before the real provision call
-             tmp_config = derive_new_db_config(base_config, alias)
-             db_name = tmp_config.get("NAME") or alias
+            base_config = dict(connections[base_alias].settings_dict)
+            # Derive name only for display before the real provision call
+            tmp_config = derive_new_db_config(base_config, alias)
+            db_name = tmp_config.get("NAME") or alias
 
         output.info(f"Branch:    {branch}")
         output.info(f"New alias: {alias}")
