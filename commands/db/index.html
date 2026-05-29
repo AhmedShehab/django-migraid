@@ -861,6 +861,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auto_provision_branches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AUTO_PROVISION_BRANCHES
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1003,6 +1031,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auto_provision_branches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AUTO_PROVISION_BRANCHES
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1072,6 +1128,18 @@
 <li><code>--dry-run</code>: Preview which entries would be removed.</li>
 <li><code>--yes</code>: Skip the confirmation prompt.</li>
 </ul>
+<h2 id="automation">Automation</h2>
+<h3 id="auto_provision_branches">AUTO_PROVISION_BRANCHES</h3>
+<p>If you want <code>django-migraid</code> to automatically provision a new database whenever you switch to a branch that doesn't have one, set the <code>AUTO_PROVISION_BRANCHES</code> environment variable to <code>TRUE</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># In your .env or shell</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nv">AUTO_PROVISION_BRANCHES</span><span class="o">=</span>TRUE
+</code></pre></div>
+<p>When this is enabled, running any <code>migraid</code> command on a new branch will:
+1. Detect that the branch has no registered database.
+2. Derive a new database configuration from your <code>default</code> database.
+3. Physically create the database.
+4. Run <code>python manage.py migrate</code> on it.
+5. Register it so future commands (including <code>runserver</code>) use it automatically.</p>
 <h2 id="how-it-works">How it works</h2>
 <p><code>django-migraid</code> stores its configuration in a <code>.migraid/config.json</code> file in your repository root. You should add <code>.migraid/</code> to your <code>.gitignore</code> if you don't want to share these mappings with other developers or if they contain credentials.</p>
 <p>When you run any <code>migraid</code> command, it automatically:
