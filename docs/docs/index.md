@@ -21,6 +21,7 @@ When developers work in parallel on Django projects, migration conflicts are ine
 - **Diagnoses** every known migration issue class
 - **Previews** exactly what it will change before touching a file
 - **Auto-fixes** the safe cases (renumbering, conflict linearization)
+- **Branch-aware** database management (provision and switch databases automatically as you switch git branches)
 - **Protects** you from common footguns (rewriting applied migrations, operating on non-local DBs)
 
 See [Known Issues](known-issues.md) for the full catalog.

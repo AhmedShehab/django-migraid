@@ -28,6 +28,8 @@ nav:
       - renumber: commands/renumber.md
       - prune: commands/prune.md
       - sync-branch: commands/sync-branch.md
+      - repair: commands/repair.md
+      - db: commands/db.md
       - graph: commands/graph.md
 
 markdown_extensions:

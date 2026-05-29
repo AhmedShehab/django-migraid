@@ -20,7 +20,12 @@ This guide helps you diagnose and fix common Django migration errors using `djan
 **Search Terms:** `django InconsistentMigrationHistory`, `migration applied before its dependency`, `django_migrations table out of sync`.
 
 **How to fix:**
-Use the `--update-db` flag with `renumber` or `rebase` to keep your database in sync with your files (Error **E005**):
+Use the `repair` command to safely mark the misapplied migration as unapplied so it can be re-run in the correct order:
+```bash
+python manage.py migraid repair
+```
+
+You can also use the `--update-db` flag with `renumber` or `rebase` to prevent this from happening in the first place (Error **E005**):
 ```bash
 python manage.py migraid renumber <app> --update-db
 ```

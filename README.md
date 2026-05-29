@@ -52,6 +52,12 @@ python manage.py migraid prune --yes
 # Clean up untracked migration files after switching branches
 python manage.py migraid sync-branch --dry-run
 
+# Fix InconsistentMigrationHistory in the database
+python manage.py migraid repair
+
+# Provision a new database for the current branch
+python manage.py migraid db add
+
 # Visualize the migration DAG
 python manage.py migraid graph myapp --format mermaid
 ```
@@ -64,12 +70,13 @@ python manage.py migraid graph myapp --format mermaid
 | Circular migration dependencies | E002 | `CircularDependencyError`, `circular dependency` | — (reports) |
 | Out-of-order numbering | W006 | `gap in numbering`, `renumber migrations` | `renumber` |
 | Dependency on a deleted migration | E004 | `NodeNotFoundError`, `missing dependency` | — (reports) |
-| Renamed applied migration | E005 | `InconsistentMigrationHistory`, `table desync` | `rebase`/`renumber`/`fix-conflicts --update-db` |
+| Renamed applied migration | E005 | `InconsistentMigrationHistory`, `table desync` | `repair` / `rebase` / `renumber` / `fix-conflicts --update-db` |
 | Stale `django_migrations` rows | W001 | `ghost migrations`, `remove from django_migrations` | `prune` |
 | `RunPython` without `reverse_code` | W002 | `unreversible data migration` | — (reports) |
 | Squashed migration cleanup | W003 | `remove old migrations after squash` | — (reports) |
 | Merge migrations in rebase flow | W004 | `delete django merge migrations` | `rebase` |
 | Non-deterministic dependencies | W005 | `random migration order` | — (reports) |
+| Multi-branch database drift | — | `database state out of sync with branch` | `db add` |
 
 ## Common Scenarios & How-To
 
@@ -87,11 +94,22 @@ python manage.py migraid rebase --base main
 ```
 
 ### How to fix `InconsistentMigrationHistory`?
-If you've renamed or renumbered migrations that are already applied, use the `--update-db` flag:
+If you've renamed or renumbered migrations that are already applied, use:
+```bash
+python manage.py migraid repair
+```
+Or use the `--update-db` flag during renumbering:
 ```bash
 python manage.py migraid renumber myapp --update-db
 ```
 This synchronizes the `django_migrations` table with your new file names.
+
+### How to use a separate database per git branch?
+To automatically switch databases when you switch branches:
+```bash
+python manage.py migraid db add
+```
+This provisions a new database and registers it to your current branch.
 
 ### How to find circular dependencies?
 Run the diagnostic tool to identify cycles in your migration graph:
@@ -107,7 +125,7 @@ Commands fall into three groups:
 
 **Rewrite migration files:** `rebase`, `fix-conflicts`, `linearize`, `renumber` — file plane only by default; pass `--update-db` to also rename `django_migrations` rows.
 
-**Repair DB / branch state:** `prune`, `sync-branch` — these commands exist to fix the database or file state directly.
+**Repair DB / branch state:** `prune`, `sync-branch`, `repair`, `db` — these commands exist to fix or manage the database or branch state directly.
 
 ### `doctor`
 
@@ -171,6 +189,32 @@ Print or export the migration DAG.
 
 ```bash
 python manage.py migraid graph [app] [--format mermaid|dot|ascii] [--output FILE]
+```
+
+### `repair`
+
+Fix `InconsistentMigrationHistory` by marking misapplied migrations as unapplied so they can be re-run in order.
+
+```bash
+python manage.py migraid repair [--dry-run] [--yes] [--database ALIAS]
+```
+
+### `db`
+
+Manage per-branch databases. Subcommands: `add`, `rm`, `ls`, `prune`.
+
+```bash
+# Provision/register DB for current branch
+python manage.py migraid db add [--alias ALIAS] [--database BASE_ALIAS]
+
+# List all mappings
+python manage.py migraid db ls
+
+# Remove mapping and drop DB
+python manage.py migraid db rm [--branch BRANCH]
+
+# Prune entries for deleted branches
+python manage.py migraid db prune
 ```
 
 ## Safety Model
