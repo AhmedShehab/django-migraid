@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/doctor/">
+        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/repair/">
       
       
-        <link rel="prev" href="../../update-db/">
+        <link rel="prev" href="../sync-branch/">
       
       
-        <link rel="next" href="../rebase/">
+        <link rel="next" href="../db/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>doctor - django-migraid</title>
+        <title>repair - django-migraid</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#doctor" class="md-skip">
+        <a href="#repair" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              doctor
+              repair
             
           </span>
         </div>
@@ -289,7 +289,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../doctor/" class="md-tabs__link">
           
   
   
@@ -513,37 +513,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    doctor
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../doctor/" class="md-nav__link">
         
   
   
@@ -559,48 +532,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -778,10 +709,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../repair/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    repair
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -797,6 +755,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -892,10 +892,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Options
       
     </span>
   </a>
@@ -903,10 +903,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        How it works
       
     </span>
   </a>
@@ -933,18 +933,23 @@
   
 
 
-<h1 id="doctor">doctor</h1>
-<p>Read-only diagnostic. Reports every detected issue with severity.</p>
-<h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>doctor<span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="o">]</span>
+<h1 id="repair">repair</h1>
+<p>Fix <code>InconsistentMigrationHistory</code> errors in your database.</p>
+<p>If you have applied a migration that is now "before" its dependency (usually after a rebase or manual file manipulation), Django's standard <code>migrate</code> command will fail with an <code>InconsistentMigrationHistory</code> error.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>repair<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>ALIAS<span class="o">]</span>
 </code></pre></div>
-<h2 id="description">Description</h2>
-<p>The <code>doctor</code> command scans your project's migrations for common issues, circular dependencies, and inconsistencies. It provides a detailed report with severity levels (ERROR, WARNING, INFO).</p>
+<h2 id="options">Options</h2>
 <ul>
-<li><strong>Tier 1 (Static)</strong>: Scans files using <code>libcst</code> without importing them. Works even if the code is broken.</li>
-<li><strong>Tier 2 (Live)</strong>: Optional integration with Django's migration loader for database-dependent checks.</li>
+<li><code>--dry-run</code>: Preview the inconsistency without making changes.</li>
+<li><code>--yes</code>: Skip the confirmation prompt.</li>
+<li><code>--database</code>: The database alias to repair. Defaults to <code>default</code>.</li>
 </ul>
-<p>Tier 2 includes <strong>E005</strong>, which flags an applied <code>django_migrations</code> row whose file was renamed on disk without updating the table. The hint explains how to recover; see <a href="../../update-db/">Updating the <code>django_migrations</code> table</a>.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The <code>repair</code> command:
+1. Scans for <code>InconsistentMigrationHistory</code> errors.
+2. Identifies the "misapplied" migration (the one applied before its dependency).
+3. Marks that migration as <strong>unapplied</strong> in the <code>django_migrations</code> table.
+4. Prompts you to run <code>python manage.py migrate</code> to re-apply it (and its dependencies) in the correct order.</p>
 
 
 

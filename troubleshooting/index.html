@@ -820,6 +820,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../commands/repair/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    repair
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/db/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    db
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../commands/graph/" class="md-nav__link">
         
   
@@ -973,15 +1029,18 @@
 <p><strong>The Problem:</strong> Django detects that a migration is applied, but one of its dependencies is NOT applied. This often happens after renumbering migrations or rebasing without updating the database.</p>
 <p><strong>Search Terms:</strong> <code>django InconsistentMigrationHistory</code>, <code>migration applied before its dependency</code>, <code>django_migrations table out of sync</code>.</p>
 <p><strong>How to fix:</strong>
-Use the <code>--update-db</code> flag with <code>renumber</code> or <code>rebase</code> to keep your database in sync with your files (Error <strong>E005</strong>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--update-db
+Use the <code>repair</code> command to safely mark the misapplied migration as unapplied so it can be re-run in the correct order:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>repair
+</code></pre></div></p>
+<p>You can also use the <code>--update-db</code> flag with <code>renumber</code> or <code>rebase</code> to prevent this from happening in the first place (Error <strong>E005</strong>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;<span class="w"> </span>--update-db
 </code></pre></div></p>
 <h2 id="multiple-leaf-nodes-merge-conflicts">Multiple Leaf Nodes (Merge Conflicts)</h2>
 <p><strong>The Problem:</strong> Two developers created a new migration (e.g., <code>0005_...</code>) on different branches. When merged, the app has two migrations that both claim to be the "latest".</p>
 <p><strong>Search Terms:</strong> <code>django migration merge conflict</code>, <code>multiple leaf nodes in migration graph</code>, <code>makemigrations --merge</code>.</p>
 <p><strong>How to fix:</strong>
 Instead of manually creating a merge migration, use <code>fix-conflicts</code> (Error <strong>E001</strong>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>fix-conflicts
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>fix-conflicts
 </code></pre></div></p>
 <h2 id="nodenotfounderror">NodeNotFoundError</h2>
 <p><strong>The Problem:</strong> A migration depends on another migration that no longer exists on disk. This usually happens after a bad rebase or if a migration file was accidentally deleted.</p>
@@ -993,14 +1052,14 @@ Run <code>python manage.py migraid doctor</code> to find which migration has the
 <p><strong>Search Terms:</strong> <code>django migration gap numbering</code>, <code>renumber django migrations</code>.</p>
 <p><strong>How to fix:</strong>
 Use <code>renumber</code> to close the gaps (Warning <strong>W006</strong>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>renumber<span class="w"> </span>&lt;app&gt;
 </code></pre></div></p>
 <h2 id="stale-entries-in-django_migrations">Stale entries in <code>django_migrations</code></h2>
 <p><strong>The Problem:</strong> Your <code>django_migrations</code> table contains rows for migrations that are no longer in your codebase.</p>
 <p><strong>Search Terms:</strong> <code>remove deleted migrations from django_migrations</code>, <code>ghost migrations django</code>.</p>
 <p><strong>How to fix:</strong>
 Use <code>prune</code> to safely remove these entries (Warning <strong>W001</strong>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>prune
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>prune
 </code></pre></div></p>
 
 

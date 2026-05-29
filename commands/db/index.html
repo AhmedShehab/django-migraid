@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/doctor/">
+        <link rel="canonical" href="https://AhmedShehab.github.io/django-migraid/commands/db/">
       
       
-        <link rel="prev" href="../../update-db/">
+        <link rel="prev" href="../repair/">
       
       
-        <link rel="next" href="../rebase/">
+        <link rel="next" href="../graph/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>doctor - django-migraid</title>
+        <title>db - django-migraid</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#doctor" class="md-skip">
+        <a href="#db" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              doctor
+              db
             
           </span>
         </div>
@@ -289,7 +289,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../doctor/" class="md-tabs__link">
           
   
   
@@ -513,37 +513,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    doctor
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../doctor/" class="md-nav__link">
         
   
   
@@ -559,48 +532,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -806,10 +737,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../db/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    db
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -825,6 +783,98 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#subcommands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subcommands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Subcommands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prune" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -892,21 +942,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#subcommands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Subcommands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Subcommands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#ls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        ls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prune" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
       
     </span>
   </a>
@@ -933,18 +1033,51 @@
   
 
 
-<h1 id="doctor">doctor</h1>
-<p>Read-only diagnostic. Reports every detected issue with severity.</p>
-<h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>doctor<span class="w"> </span><span class="o">[</span>--app<span class="w"> </span>LABEL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="o">]</span>
+<h1 id="db">db</h1>
+<p>Manage per-branch databases for your Django project.</p>
+<p><code>django-migraid</code> can provision and track separate databases for each git branch, allowing you to switch branches without your database state getting out of sync with your migration files.</p>
+<h2 id="subcommands">Subcommands</h2>
+<h3 id="add">add</h3>
+<p>Register the current branch and provision a new database.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>db<span class="w"> </span>add<span class="w"> </span><span class="o">[</span>--alias<span class="w"> </span>ALIAS<span class="o">]</span><span class="w"> </span><span class="o">[</span>--database<span class="w"> </span>BASE_ALIAS<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span>
 </code></pre></div>
-<h2 id="description">Description</h2>
-<p>The <code>doctor</code> command scans your project's migrations for common issues, circular dependencies, and inconsistencies. It provides a detailed report with severity levels (ERROR, WARNING, INFO).</p>
 <ul>
-<li><strong>Tier 1 (Static)</strong>: Scans files using <code>libcst</code> without importing them. Works even if the code is broken.</li>
-<li><strong>Tier 2 (Live)</strong>: Optional integration with Django's migration loader for database-dependent checks.</li>
+<li><code>--alias</code>: The database alias to create in Django. Defaults to a slugified version of your branch name.</li>
+<li><code>--database</code>: An existing database alias to use as a template for the new configuration (copies HOST, USER, PASSWORD, etc.). Defaults to <code>default</code>.</li>
+<li><code>--yes</code>: Skip the confirmation prompt.</li>
 </ul>
-<p>Tier 2 includes <strong>E005</strong>, which flags an applied <code>django_migrations</code> row whose file was renamed on disk without updating the table. The hint explains how to recover; see <a href="../../update-db/">Updating the <code>django_migrations</code> table</a>.</p>
+<p>When you run this command:
+1. It derives a new database name from your base configuration.
+2. It creates the physical database (Postgres, MySQL, or SQLite).
+3. It runs <code>python manage.py migrate</code> on the new database.
+4. It saves the mapping in <code>.migraid/config.json</code>.</p>
+<h3 id="ls">ls</h3>
+<p>List all branch-database mappings.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>db<span class="w"> </span>ls
+</code></pre></div>
+<p>Displays a table showing which branches are mapped to which aliases and physical databases, including their current status (e.g., if they are stale).</p>
+<h3 id="rm">rm</h3>
+<p>Remove a branch's database entry and drop the database.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>db<span class="w"> </span>rm<span class="w"> </span><span class="o">[</span>--branch<span class="w"> </span>BRANCH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span>
+</code></pre></div>
+<ul>
+<li><code>--branch</code>: The branch to remove. Defaults to the current branch.</li>
+<li><code>--yes</code>: Skip the confirmation prompt.</li>
+</ul>
+<h3 id="prune">prune</h3>
+<p>Remove database entries for git branches that no longer exist.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>db<span class="w"> </span>prune<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--yes<span class="o">]</span>
+</code></pre></div>
+<ul>
+<li><code>--dry-run</code>: Preview which entries would be removed.</li>
+<li><code>--yes</code>: Skip the confirmation prompt.</li>
+</ul>
+<h2 id="how-it-works">How it works</h2>
+<p><code>django-migraid</code> stores its configuration in a <code>.migraid/config.json</code> file in your repository root. You should add <code>.migraid/</code> to your <code>.gitignore</code> if you don't want to share these mappings with other developers or if they contain credentials.</p>
+<p>When you run any <code>migraid</code> command, it automatically:
+1. Detects the current git branch.
+2. If a database mapping exists for that branch, it injects the database configuration into Django's <code>DATABASES</code> setting.
+3. Automatically uses that database alias if you don't specify one with <code>--database</code>.</p>
 
 
 

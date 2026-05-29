@@ -2,50 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/known-issues/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/troubleshooting/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/update-db/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
+    </url>
+    <url>
+         <loc>https://AhmedShehab.github.io/django-migraid/commands/db/</loc>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/doctor/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/fix-conflicts/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/graph/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/linearize/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/prune/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/rebase/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/renumber/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
+    </url>
+    <url>
+         <loc>https://AhmedShehab.github.io/django-migraid/commands/repair/</loc>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://AhmedShehab.github.io/django-migraid/commands/sync-branch/</loc>
-         <lastmod>2026-05-27</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
 </urlset>
