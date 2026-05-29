@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0b8] - 2026-05-29
+
+### Added
+- Zero-config branch-aware databases: simply add `migraid` to `INSTALLED_APPS` and use `AUTO_PROVISION_BRANCHES=TRUE` in your environment.
+- Support for `runserver` and other standard Django commands to automatically use branch-specific databases without any `settings.py` changes.
+
 ## [0.3.0b7] - 2026-05-29
 
 ### Added
