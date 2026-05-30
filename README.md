@@ -19,7 +19,23 @@ Two developers branch from `main` at migration `0004`. Both generate `0005_*.py`
 pip install django-migraid
 ```
 
-Add to `INSTALLED_APPS`:
+There are two ways to use it — pick whichever you prefer:
+
+**1. Standalone CLI (zero config).** After installing, the `migraid` command is
+available directly. It bootstraps Django for you, so there is **nothing to add
+to `INSTALLED_APPS`**:
+
+```bash
+migraid doctor
+```
+
+It locates your Django settings automatically via (in order): a `--settings
+<module>` flag, the `DJANGO_SETTINGS_MODULE` environment variable, or your
+project's `manage.py`. Run it from your project directory, or set
+`DJANGO_SETTINGS_MODULE` / pass `--settings`.
+
+**2. As a Django app.** Add it to `INSTALLED_APPS` and use it through
+`manage.py`:
 
 ```python
 INSTALLED_APPS = [
@@ -28,10 +44,15 @@ INSTALLED_APPS = [
 ]
 ```
 
+Both forms support the exact same subcommands.
+
 ## Quick Start
 
 ```bash
-# Diagnose all migration issues in your project
+# Diagnose all migration issues in your project (standalone CLI)
+migraid doctor
+
+# ...or via manage.py when installed as an app
 python manage.py migraid doctor
 
 # Rebase your branch's migrations onto main

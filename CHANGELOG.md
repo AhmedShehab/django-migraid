@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Standalone `migraid` console-script entry point: run `migraid <subcommand>` directly from the shell **without** adding `migraid` to `INSTALLED_APPS`. It bootstraps Django itself, discovering settings via a `--settings` flag, the `DJANGO_SETTINGS_MODULE` environment variable, or your project's `manage.py`. The existing `python manage.py migraid ...` flow is unchanged — both usages are supported.
+
 ## [0.3.0b8] - 2026-05-29
 
 ### Added

@@ -8,7 +8,15 @@
 pip install django-migraid
 ```
 
-Add `"migraid"` to `INSTALLED_APPS`, then:
+Then run it either as a **standalone CLI** (no settings changes required — it
+finds your Django settings via `--settings`, `DJANGO_SETTINGS_MODULE`, or your
+`manage.py`):
+
+```bash
+migraid doctor
+```
+
+…or **as a Django app** by adding `"migraid"` to `INSTALLED_APPS`:
 
 ```bash
 python manage.py migraid doctor

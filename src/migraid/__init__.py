@@ -1,3 +1,3 @@
 """django-migraid: detect, diagnose, and auto-fix Django migration problems."""
 
-__version__ = "0.3.0b8"
+__version__ = "0.3.0b9"

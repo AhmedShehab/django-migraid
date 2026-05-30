@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-migraid"
-version = "0.3.0b8"
+version = "0.3.0b9"
 description = "Detect, diagnose, and auto-fix Django migration problems, circular dependencies, and merge conflicts."
 readme = "README.md"
 license = "Apache-2.0"
@@ -53,6 +53,9 @@ dev = [
     "django-stubs[compatible-mypy]==5.1.0",
     "mkdocs-material>=9.0",
 ]
+
+[project.scripts]
+migraid = "migraid.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/AhmedShehab/django-migraid"
