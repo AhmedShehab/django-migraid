@@ -931,8 +931,13 @@
 <h2 id="quick-start">Quick Start</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>django-migraid
 </code></pre></div>
-<p>Add <code>"migraid"</code> to <code>INSTALLED_APPS</code>, then:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>doctor
+<p>Then run it either as a <strong>standalone CLI</strong> (no settings changes required — it
+finds your Django settings via <code>--settings</code>, <code>DJANGO_SETTINGS_MODULE</code>, or your
+<code>manage.py</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>migraid<span class="w"> </span>doctor
+</code></pre></div>
+<p>…or <strong>as a Django app</strong> by adding <code>"migraid"</code> to <code>INSTALLED_APPS</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>migraid<span class="w"> </span>doctor
 </code></pre></div>
 <h2 id="why-django-migraid">Why django-migraid?</h2>
 <p>When developers work in parallel on Django projects, migration conflicts are inevitable. <code>django-migraid</code> gives you a single toolkit that:</p>
